@@ -1,0 +1,83 @@
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+plugins {
+    id 'java-library'
+}
+
+group 'com.wowza.wms.plugin.metadatainjection'
+version '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs "$wseLibDir"
+    }
+}
+
+configurations {
+    plugin
+    compileClasspath.extendsFrom(plugin)
+    runtimeClasspath.extendsFrom(plugin)
+}
+
+dependencies {
+    implementation fileTree(dir: "$wseLibDir", include: '**/*.jar')
+
+    implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
+    implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
+}
+
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes(
+                'Gradle-Version'        : "Gradle ${gradle.gradleVersion}",
+                'Created-By'      		: "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Name'                  : "${project.name}",
+                'Build-Version'	        : "${project.version}",
+        )
+    }
+    metaInf {
+        from files('LICENSE.txt')
+    }
+    archiveBaseName = 'wse-plugin-' + projectName
+}
+
+clean.configure {
+    delete layout.projectDirectory.dir("lib")
+}
+
+
+tasks.register('generateReleaseInfo') {
+    group = "build"
+    Provider<Directory> outputDir = layout.buildDirectory.dir('generated/java') as Provider<Directory>
+    outputs.dir outputDir.get().asFile.absolutePath
+    doLast {
+        def now = System.currentTimeMillis()
+        def packageDotPath = "${project.group}"
+        def packagePath = packageDotPath.replaceAll('\\.', '/')
+        Directory dir = outputDir.get().dir(packagePath)
+        dir.asFile.mkdirs()
+        dir.file("ReleaseInfo.java").asFile.text =
+                """|package $packageDotPath;
+                   |public class ReleaseInfo {
+                   |    public static String getProject() { return "${projectName}"; }
+                   |    public static String getVersion() { return "${project.version}"; }
+                   |}""".stripMargin()
+    }
+}
+
+sourceSets.main.java.srcDir generateReleaseInfo
+clean.finalizedBy generateReleaseInfo
+compileJava.dependsOn generateReleaseInfo
+
+test {
+    useJUnitPlatform()
+}
