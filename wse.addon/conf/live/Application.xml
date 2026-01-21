@@ -199,6 +199,16 @@
 		<HTTPStreamer>
 			<!-- Properties defined here will override any properties defined in conf/HTTPStreamers.xml for any HTTPStreamer loaded by this applications -->
 			<Properties>
+				<Property>
+					<Name>cupertinoEnableProgramDateTime</Name>
+					<Value>true</Value>
+					<Type>Boolean</Type>
+				</Property>
+				<Property>
+					<Name>cupertinoEnableId3ProgramDateTime</Name>
+					<Value>true</Value>
+					<Type>Boolean</Type>
+				</Property>				
 			</Properties>
 		</HTTPStreamer>
 		<Manager>
@@ -231,9 +241,9 @@
 				<Class>com.wowza.wms.module.ModuleFLVPlayback</Class>
 			</Module>
 			<Module>
-				<Name>MyFirstModule</Name>
-				<Description>MyFirstModule</Description>
-				<Class>com.wowza.wms.plugin.myFirstPlugin.MyFirstModule</Class>
+				<Name>ID3AndPDTInjectionModule</Name>
+				<Description>ID3AndPDTInjectionModule</Description>
+				<Class>com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule</Class>
 			</Module>
 		</Modules>
 		<!-- Properties defined here will be added to the IApplication.getProperties() and IApplicationInstance.getProperties() collections -->
@@ -247,7 +257,12 @@
 			  <Name>metadataApiKey</Name>
 			  <Value>secretkey</Value>
 			  <Type>String</Type>
-			</Property>			
+			</Property>
+			<Property>
+			  <Name>amfToID3ConversionAddToManifest</Name>
+			  <Value>true</Value>
+			</Property>
+			
 		</Properties>
 		<ApplicationTimeout>0</ApplicationTimeout>
 		<PingTimeout>0</PingTimeout>

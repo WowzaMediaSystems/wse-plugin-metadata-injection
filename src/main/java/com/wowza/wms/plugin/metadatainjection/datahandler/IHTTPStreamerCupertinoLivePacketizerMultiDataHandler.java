@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.module;
+package com.wowza.wms.plugin.metadatainjection.datahandler;
 
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.IHTTPStreamerCupertinoLivePacketizerDataHandler2;
 

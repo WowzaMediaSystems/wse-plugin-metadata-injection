@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.module.metadataconverter;
+package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
 
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.logging.WMSLoggerFactory;
@@ -8,10 +8,10 @@ public class AMFToID3ConverterStreamController
 	private IApplicationInstance appInstance;
 	private String streamName;
 	private boolean dataConversionEnabled = false;
-	private int maxVerboseConversionMessages = 20;
-	private int maxFailedConversionMessages = 20;
+	private int maxVerboseConversionMessages = 5;
+	private int maxFailedConversionMessages = 5;
 	private AMFToID3LiveStreamPacketizerDataHandler dataHandler2;
-	private boolean enableDataConversion = false;
+	private boolean enableDataConversion = true;
 
 	public AMFToID3ConverterStreamController(IApplicationInstance appInstance, String streamName)
 	{

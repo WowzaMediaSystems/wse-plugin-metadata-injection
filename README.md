@@ -4,7 +4,8 @@ This module provides a rest API to added metadata to a live stream. This is done
 ## Install
 * copy wse-plugin-metadata-injection jar to lib folder
 
-* add HTTPProvider to VHost.xml
+### VHost.xml 
+add HTTPProvider
 
 ```xml
 <HTTPProvider>
@@ -14,25 +15,36 @@ This module provides a rest API to added metadata to a live stream. This is done
 </HTTPProvider>
 ```  
 
-Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key`
-
-```xml
-<Property>
-  <Name>metadataApiKey</Name>
-  <Value>foo-bar</Value>
-  <Type>String</Type>
-</Property>
+### Application.xml
+Need to turn on Program Date Time for HLS
+Add the following module:
+```
+<Module>
+	<Name>ID3AndPDTInjectionModule</Name>
+	<Description>ID3AndPDTInjectionModule</Description>
+	<Class>com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule</Class>
+</Module>
 ```
 
-### Properties (details TBD)
-* amfToID3ConversionVerboseMaximum
-* amfToID3ConversionFailedMaximum
-* amfToID3ConversionEnabled
-* amfToID3ConversionAddToManifest
 
-* cupertinoEnableProgramDateTime
-* cupertinoEnableId3ProgramDateTime
-* cupertinoProgramDateTimeOffset
+### Properties:
+
+| Name                  | Type                                           | Description                                                                      |
+| -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| metadataApiKey             | String   | Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key` |
+| amfToID3ConversionEnabled | Boolean | convert AMF data to ID3 data.  Default true |
+| amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-OBJECT-DETECTION` with guid of event. Default false |
+| amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 
+| amfToID3ConversionFailedMaximum | Integer | How many failed log messages to log. Default 5
+
+
+### Properties (HTTPStreamer):
+| Name                  | Type                                           | Description                                                                      |
+| -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| cupertinoEnableProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS m3u8. Default false. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
+| cupertinoEnableId3ProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags.  Default true.  PDT added to media segment |
+| cupertinoProgramDateTimeOffset | Integer | How much to adjust PDT.  Default 0 |
+
 
 ## API
 ### API patterns is

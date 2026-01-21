@@ -1,18 +1,21 @@
 package com.wowza.wms.plugin.metadatainjection.module;
 
-import com.wowza.wms.amf.AMFPacket;
+import com.wowza.wms.plugin.metadatainjection.*;
+import com.wowza.wms.plugin.metadatainjection.datahandler.*;
+import com.wowza.wms.plugin.metadatainjection.httpprovider.*;
+import com.wowza.wms.plugin.metadatainjection.datahandler.pdt.*;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.*;
+
 import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.*;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.module.ModuleBase;
-import com.wowza.wms.plugin.metadatainjection.*;
-import com.wowza.wms.plugin.metadatainjection.module.metadataconverter.*;
-import com.wowza.wms.plugin.metadatainjection.module.pdt.PDTLiveStreamPacketizerDataHandler;
 import com.wowza.wms.stream.livepacketizer.*;
 
-public class ModuleCupertinoMultipleID3Converter extends ModuleBase
+public class ID3AndPDTInjectionModule extends ModuleBase
 {
-	public static final Class<ModuleCupertinoMultipleID3Converter> CLASS = ModuleCupertinoMultipleID3Converter.class;
+	public static final Class<ID3AndPDTInjectionModule> CLASS = ID3AndPDTInjectionModule.class;
 	public static String MODULE_NAME = CLASS.getSimpleName();
 	public static final String MODULE_VERSION = ReleaseInfo.getVersion();
 
@@ -103,7 +106,7 @@ public class ModuleCupertinoMultipleID3Converter extends ModuleBase
 				((LiveStreamPacketizerCupertino)packetizer).setDataHandler(
 						new LiveStreamPacketizerDataHandler((LiveStreamPacketizerCupertino)packetizer, streamName));
 				getLogger().info(
-						"ModuleCupertinoMultipleID3Converter#LiveStreamPacketizerListener.onLiveStreamPacketizerCreate[" + ((LiveStreamPacketizerCupertino)packetizer).getContextStr() + "]");
+						"ID3AndPDTInjectionModule#LiveStreamPacketizerListener.onLiveStreamPacketizerCreate[" + ((LiveStreamPacketizerCupertino)packetizer).getContextStr() + "]");
 			}
 		}
 
@@ -111,13 +114,13 @@ public class ModuleCupertinoMultipleID3Converter extends ModuleBase
 		public void onLiveStreamPacketizerDestroy(ILiveStreamPacketizer liveStreamPacketizer)
 		{
 			String streamName = liveStreamPacketizer.getProperties()
-					.getPropertyStr("ModuleCupertinoMultipleID3Converter.streamName");
+					.getPropertyStr("ID3AndPDTInjectionModule.streamName");
 
 			appsManager.removeController(appInstance, streamName);
 			if (liveStreamPacketizer instanceof LiveStreamPacketizerCupertino)
 			{
 				getLogger().info(
-						"ModuleCupertinoMultipleID3Converter#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + ((LiveStreamPacketizerCupertino)liveStreamPacketizer).getContextStr() + "]");
+						"ID3AndPDTInjectionModule#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + ((LiveStreamPacketizerCupertino)liveStreamPacketizer).getContextStr() + "]");
 			}
 
 			super.onLiveStreamPacketizerDestroy(liveStreamPacketizer);
@@ -129,7 +132,7 @@ public class ModuleCupertinoMultipleID3Converter extends ModuleBase
 	{
 		this.appInstance = appInstance;
 		getLogger().info(
-				"ModuleCupertinoMultipleID3Converter.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
+				"ID3AndPDTInjectionModule.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
 
 		listener = new LiveStreamPacketizerListener(appInstance);
 		appInstance.addLiveStreamPacketizerListener(listener);
@@ -139,7 +142,7 @@ public class ModuleCupertinoMultipleID3Converter extends ModuleBase
 	{
 		appInstance.removeLiveStreamPacketizerListener(listener);
 
-		getLogger().info("ModuleCupertinoMultipleID3Converter.onAppStop[" + appInstance.getContextStr() + "]");
+		getLogger().info("ID3AndPDTInjectionModule.onAppStop[" + appInstance.getContextStr() + "]");
 
 	}
 

@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.module.metadataconverter;
+package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
 
 import com.fasterxml.jackson.databind.*;
 import com.wowza.wms.amf.*;
@@ -6,7 +6,8 @@ import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.*;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.*;
-import com.wowza.wms.plugin.metadatainjection.module.IHTTPStreamerCupertinoLivePacketizerMultiDataHandler;
+
+import com.wowza.wms.plugin.metadatainjection.datahandler.*;
 
 public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler
 {
@@ -48,7 +49,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 		addToManifest = appInstance.getProperties().getPropertyBoolean("amfToID3ConversionAddToManifest", false);
 
 		// We have controller, but need to set the packetizer
-		packetizer.getProperties().setProperty("ModuleCupertinoMultipleID3Converter.streamName", streamName);
+		packetizer.getProperties().setProperty("ID3AndPDTInjectionModule.streamName", streamName);
 
 	}
 

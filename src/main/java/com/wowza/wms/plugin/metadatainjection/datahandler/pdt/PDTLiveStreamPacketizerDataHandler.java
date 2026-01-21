@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.module.pdt;
+package com.wowza.wms.plugin.metadatainjection.datahandler.pdt;
 
 import com.wowza.util.*;
 import com.wowza.wms.amf.AMFPacket;
@@ -6,9 +6,10 @@ import com.wowza.wms.application.*;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.*;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.*;
-import com.wowza.wms.plugin.metadatainjection.module.IHTTPStreamerCupertinoLivePacketizerMultiDataHandler;
 import com.wowza.wms.stream.IMediaStream;
 import org.apache.commons.lang.time.FastDateFormat;
+
+import com.wowza.wms.plugin.metadatainjection.datahandler.*;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ public class PDTLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertin
 	private FastDateFormat id3DateString = FastDateFormat.getInstance(ID3DATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
 
 	private boolean enableProgramDateTime = false;
-	private boolean enableId3ProgramDateTime = false;
+	private boolean enableId3ProgramDateTime = true;
 	private long cupertinoProgramDateTimeOffset = 0;
 	private String streamName = null;
 	private LiveStreamPacketizerCupertino packetizer = null;
