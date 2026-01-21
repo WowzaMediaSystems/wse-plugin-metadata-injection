@@ -42,8 +42,6 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 		this.converter = new AMFToID3Converter();
 		converter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 		converter.setMaxFailedConversionMessages(maxFailedConversionMessages);
-		boolean alwaysConvertBeacon = appInstance.getProperties().getPropertyBoolean("amfToID3AlwaysConvertBeacon", true);
-		converter.setAlwaysConvertBeacon(alwaysConvertBeacon);
 
 		converter.setContextStr(liveStreamPacketizer.getContextStr());
 

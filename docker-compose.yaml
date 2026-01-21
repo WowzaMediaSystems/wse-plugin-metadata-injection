@@ -12,7 +12,7 @@ services:
             - LOG_LEVEL=INFO #DEBUG INFO WARN ERROR
             - SIMU_LIVE=disabled
         volumes:
-            - ./code/wse-plugin-metedata-injection/build/libs:/usr/local/WowzaStreamingEngine/lib.addon
+            - ./build/libs:/usr/local/WowzaStreamingEngine/lib.addon
             - ./wse.addon/conf:/usr/local/WowzaStreamingEngine/conf.addon
         ports:
             - 80:80

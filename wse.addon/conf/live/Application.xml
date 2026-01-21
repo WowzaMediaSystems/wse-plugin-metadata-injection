@@ -245,7 +245,7 @@
 			</Property>
 			<Property>
 			  <Name>metadataApiKey</Name>
-			  <Value>secret-key</Value>
+			  <Value>secretkey</Value>
 			  <Type>String</Type>
 			</Property>			
 		</Properties>

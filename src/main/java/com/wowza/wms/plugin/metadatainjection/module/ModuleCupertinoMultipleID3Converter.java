@@ -129,7 +129,7 @@ public class ModuleCupertinoMultipleID3Converter extends ModuleBase
 	{
 		this.appInstance = appInstance;
 		getLogger().info(
-				"ModuleCupertinoMultipleID3Converter.onAppStart[" + appInstance.getContextStr() + "] CloudMetadataConverter v" + MODULE_VERSION);
+				"ModuleCupertinoMultipleID3Converter.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
 
 		listener = new LiveStreamPacketizerListener(appInstance);
 		appInstance.addLiveStreamPacketizerListener(listener);

@@ -8,7 +8,7 @@ This module provides a rest API to added metadata to a live stream. This is done
 
 ```xml
 <HTTPProvider>
-	<BaseClass>com.wowza.wms.plugin.cloud.httpprovider.HTTPProviderMetaDataInjection</BaseClass>
+	<BaseClass>com.wowza.wms.plugin.cloud.httpprovider.HTTPProviderMetadataInjection</BaseClass>
 	<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
 	<AuthenticationMethod>none</AuthenticationMethod>
 </HTTPProvider>
@@ -23,6 +23,16 @@ Can set a authorization key/header with Application.xml property.  This will req
   <Type>String</Type>
 </Property>
 ```
+
+### Properties (details TBD)
+* amfToID3ConversionVerboseMaximum
+* amfToID3ConversionFailedMaximum
+* amfToID3ConversionEnabled
+* amfToID3ConversionAddToManifest
+
+* cupertinoEnableProgramDateTime
+* cupertinoEnableId3ProgramDateTime
+* cupertinoProgramDateTimeOffset
 
 ## API
 ### API patterns is
@@ -50,8 +60,12 @@ A json object can be passed into the video stream
 
 ## curl Examples
 
+```
+curl -X GET http://127.0.0.1/v1/server/plugin/metaDataInjection/version
+```
+
 ```shell
-curl -X POST  -H "Content-Type: application/json" -H "metadata-api-key: ****-****" -d '{
+curl -X POST  -H "Content-Type: application/json" -H "metadata-api-key:secretkey" -d '{
   "event": "dataTest",
   "async": true,
   "delay": 5000,
@@ -78,9 +92,9 @@ curl -X POST  -H "Content-Type: application/json" -H "metadata-api-key: ****-***
     "longTest":1234567890123, 
     "array1Test" : [1,2,3], 
     "array2Test" : [{ "q1" : "one" },{ "q2" : "two" }]
-  }}' http://127.0.0.1:1935/v1/server/plugin/metaDataInjection/applications/live-ws/streams/mystream
+  }}' http://127.0.0.1/v1/server/plugin/metaDataInjection/applications/live/streams/mystream
 ```
 
 ```
-curl -X GET http://127.0.0.1:1935/v1/server/plugin/metaDataInjection/injections/{guid}
+curl -X GET http://127.0.0.1/v1/server/plugin/metaDataInjection/injections/{guid}
 ```

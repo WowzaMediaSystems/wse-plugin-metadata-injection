@@ -18,7 +18,6 @@ public class AMFToID3Converter
 	private int maxFailedConversionMessages = 20;
 	private int countFailedConversionMessages = 0;
 	private int maxVerboseConversionMessages = 20;
-	private boolean alwaysConvertBeacon = true;
 	private String contextStr = "";
 
 	public AMFToID3Converter()
@@ -77,7 +76,7 @@ public class AMFToID3Converter
 					if (countFailedConversionMessages < maxFailedConversionMessages)
 					{
 						WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-								.warn("CloudMetadataConverter:Unable to convert AMF data: No Converter found:" + metaType);
+								.warn("MetadataInjection:Unable to convert AMF data: No Converter found:" + metaType);
 					}
 
 				}
@@ -91,9 +90,9 @@ public class AMFToID3Converter
 			if (countFailedConversionMessages < maxFailedConversionMessages)
 			{
 				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.error("CloudMetadataConverter:Exception converting AMF data structure", e);
+						.error("MetadataInjection:Exception converting AMF data structure", e);
 				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.warn("CloudMetadataConverter:Failed structure: " + AMFToDebugFormatter.amfToDebug(amfList)
+						.warn("MetadataInjection:Failed structure: " + AMFToDebugFormatter.amfToDebug(amfList)
 								.replace('\n', '|'));
 			}
 		}
@@ -131,8 +130,6 @@ public class AMFToID3Converter
 			try
 			{
 				String payloadType = amfList.getString(0);
-				if (alwaysConvertBeacon && payloadType.equals("onWowzaLatencyBeacon"))
-					return basicJSONConverter;
 			}
 			catch (Exception e)
 			{
@@ -151,7 +148,7 @@ public class AMFToID3Converter
 		{
 
 			WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-					.warn("CloudMetadataConverter:No converter found for ID \"" + converterID + "\"");
+					.warn("MetadataInjection:No converter found for ID \"" + converterID + "\"");
 		}
 
 		return null;
@@ -168,11 +165,6 @@ public class AMFToID3Converter
 		this.maxVerboseConversionMessages = maxVerboseConversionMessages;
 		basicStringConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 		basicJSONConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
-	}
-
-	public void setAlwaysConvertBeacon(boolean alwaysConvertBeacon)
-	{
-		this.alwaysConvertBeacon = alwaysConvertBeacon;
 	}
 
 	public void setContextStr(String contextStr)

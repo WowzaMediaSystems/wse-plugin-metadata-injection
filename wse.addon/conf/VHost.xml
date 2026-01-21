@@ -58,7 +58,7 @@
 						<PasswordEncodingScheme>none</PasswordEncodingScheme>
 					</HTTPProvider>
 					<HTTPProvider>
-						<BaseClass>com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetaDataInjection</BaseClass>
+						<BaseClass>com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetadataInjection</BaseClass>
 						<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
 						<AuthenticationMethod>none</AuthenticationMethod>
 					</HTTPProvider>
@@ -76,7 +76,7 @@
 				<SSLConfig>
 					<KeyStorePath>${com.wowza.wms.context.VHostConfigHome}/conf/tls.jks</KeyStorePath>
 					<!-- vi-aws.techdemos.wowza.com -->
-					<KeyStorePassword>wowza123</KeyStorePassword>
+					<KeyStorePassword>SwX1cyk7ZuRO</KeyStorePassword>
 					<KeyStoreType>JKS</KeyStoreType>
 					<DomainToKeyStoreMapPath></DomainToKeyStoreMapPath>
 					<SSLProtocol>TLS</SSLProtocol>

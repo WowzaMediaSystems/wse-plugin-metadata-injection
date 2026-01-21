@@ -15,56 +15,13 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
-/*
-<HTTPProvider>
-	<BaseClass>com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetaDataInjection</BaseClass>
-	<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
-	<AuthenticationMethod>none</AuthenticationMethod>
-</HTTPProvider>
-
-metadata-api-key=> App Property:metadataApiKey => <cloud_account.uid>-<transcoder.uid> 
-curl -X POST  -H "Content-Type: application/json" -H "metadata-api-key: " -d '{
-  "event": "dataTest",
-  "async": true,
-  "delay": 5000,
-  "repeat": 3,
-  "repeatInterval": 500,
-  "injectTime": true,
-  "id3":true,
-  "data": {
-    "stringTest": "apple",
-    "objsTest": {
-      "name": "Gpa",
-      "parent": {
-        "name": "Mom",
-        "children": [
-          {"name":"Boy"},
-          {"name":"Girl"}
-        ]
-      }
-    },
-    "intTest":1,
-    "boolTest":true,
-    "doubleTest":1.123,
-    "bitIntTest":12345678901234567890,
-    "longTest":1234567890123, 
-    "array1Test" : [1,2,3], 
-    "array2Test" : [{ "q1" : "one" },{ "q2" : "two" }]
-  }}' http://127.0.0.1:1935/v1/server/plugin/metaDataInjection/applications/live-ws/streams/mystream
-
-curl http://127.0.0.1:1935/v1/server/plugin/metaDataInjection/injections/{guid}
-
-can include instances/_definst_/
-vhost not needed since httpprovider is in VHost.xml
-*/
-public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
+public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 {
 	private static final int MAXGUIDLIST = 250;    //so we don't eat all the memory with this list if server runs forever
 	private static final int MAXDELAY = 30000; //30 seconds
 	private static final int MAXREPEAT = 10;
 	private static final int MAXREPEATDELAY = 5000; //5 seconds
-	private static final String CLASSNAME = "HTTPProviderMetaDataInjection";
-	private static boolean convertUllPullStreams = false;
+	private static final String LOGPREFIX = "MetadataInjection:";
 
 	private static HashMap<String,Integer> countVerboseMessages = new HashMap<String, Integer>();
 	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<String,Integer>();
@@ -78,16 +35,15 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 		}
 	};
 
-	public HTTPProviderMetaDataInjection()
+	public HTTPProviderMetadataInjection()
 	{
-		log = WMSLoggerFactory.getLogger(HTTPProviderMetaDataInjection.class);
-		log.info(CLASSNAME + ":CloudMetadataConverter: Started v" + ModuleCupertinoMultipleID3Converter.MODULE_VERSION);
+		log = WMSLoggerFactory.getLogger(HTTPProviderMetadataInjection.class);
+		log.info(LOGPREFIX + "Started v" + ModuleCupertinoMultipleID3Converter.MODULE_VERSION);
 	}
 
 	public void onBind(IVHost vhost, HostPort hostPort)
 	{
 		super.onBind(vhost, hostPort);
-		convertUllPullStreams = vhost.getProperties().getPropertyBoolean("metaDataInjectionConvertUllPullStreams", false);
 	}
 
 	public void onHTTPRequest(IVHost vhost, IHTTPRequest req, IHTTPResponse resp)
@@ -98,7 +54,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 			resp.setHeader("Content-Type", "application/json");
 			resp.setHeader("Access-Control-Allow-Origin", "*");
 			String body = new String(req.getMsgBytes());
-			log.info(CLASSNAME + ":" + guid + ": message received:" + req.getRequestURL() + " " + body);
+			// log.info(LOGPREFIX + guid + ": message received:" + req.getRequestURL() + " " + body);
 			if (!doHTTPAuthentication(vhost, req, resp))
 			{
 				return;
@@ -150,7 +106,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 						}
 						catch (Exception e)
 						{
-							log.error(CLASSNAME + ":" + guid + ": ", e);
+							log.error(LOGPREFIX + guid + ": ", e);
 						}
 					}
 				}
@@ -162,11 +118,11 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 					try
 					{
 						out.write(new String(
-								"{\"name\":\"" + CLASSNAME + ":CloudMetadataConverter\",\"version\":\"" + ModuleCupertinoMultipleID3Converter.MODULE_VERSION + "\"}").getBytes());
+								"{\"name\":\"" + LOGPREFIX + "\",\"version\":\"" + ModuleCupertinoMultipleID3Converter.MODULE_VERSION + "\"}").getBytes());
 					}
 					catch (Exception e)
 					{
-						log.error(CLASSNAME + ":" + guid + ": ", e);
+						log.error(LOGPREFIX + guid + ": ", e);
 					}
 				}
 				return;
@@ -310,7 +266,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 			//and metadatApiKey is defined, make sure its valid
 			if (!metadataApiKey.equals(req.getHeader("metadata-api-key")))
 			{
-				log.warn(CLASSNAME + ":metadataApiKey defined but not valid from request");
+				log.warn(LOGPREFIX + "metadataApiKey defined but not valid from request");
 				resp.setResponseCode(401);
 				return false;
 			}
@@ -341,19 +297,9 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 				streamName = splits[idx + 1];
 			}
 		}
-		String ullAppName = appName;
-		String ullStreamName = streamName;
-		if (convertUllPullStreams)
-		{
-			if (streamName.length() == 32 && streamName.charAt(2) == '1' && convertUllPullStreams) //a ull pull stream
-			{
-				ullAppName = appName + "-pull";
-				ullStreamName = streamName + ".stream";
-			}
-		}
 
 		// Find application, application instance and stream running in WSE
-		IApplication app = vhost.getApplication(ullAppName);
+		IApplication app = vhost.getApplication(appName);
 		if (app == null)
 		{
 			failResponse(resp, guid, "application not found: " + appName, 404);
@@ -374,7 +320,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 			return null;
 		}
 
-		IMediaStream stream = streams.getStream(ullStreamName);
+		IMediaStream stream = streams.getStream(streamName);
 		if (stream == null)
 		{
 			failResponse(resp, guid, "stream not found: " + streamName, 404);
@@ -430,7 +376,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 			JsonNode eventObj = actualObj.get("event");
 			if (eventObj == null)
 			{
-				log.warn(CLASSNAME + ":" + guid + ": payload does not contain event.");
+				log.warn(LOGPREFIX + guid + ": payload does not contain event.");
 				return retVal;
 			}
 			String event = eventObj.textValue();
@@ -527,7 +473,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 					if (countVerboseMessages.get(appName) < maxVerboseConversionMessages.get(appName))
 					{
 						log.info(
-								CLASSNAME + ":" + guid + ": sending AMF event: " + event + "(" + (i + 1) + " of " + repeatCount + ")");
+								LOGPREFIX + guid + ": sending AMF event: " + event + "(" + (i + 1) + " of " + repeatCount + ")");
 					}
 					ArrayList<Date> successArray = injects.get(guid);
 					if (successArray != null)
@@ -548,12 +494,12 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 			}
 			catch (Exception e)
 			{
-				log.error(CLASSNAME + ":" + guid + ": ", e);
+				log.error(LOGPREFIX + guid + ": ", e);
 			}
 		}
 		catch (Exception e)
 		{
-			log.error(CLASSNAME + ":" + guid + ": ", e);
+			log.error(LOGPREFIX + guid + ": ", e);
 		}
 		return retVal;
 	}
@@ -633,7 +579,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 
 	private void failResponse(IHTTPResponse resp, String guid, String msg, int httpCode)
 	{
-		log.warn(CLASSNAME + ":" + guid + ": " + msg + ".");
+		log.warn(LOGPREFIX + guid + ": " + msg + ".");
 		String jsonString = " {\"status\":\"failed\", ";
 		if (guid != null)
 		{
@@ -655,7 +601,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 		}
 		catch (Exception e)
 		{
-			log.error(CLASSNAME + ": ", e);
+			log.error(LOGPREFIX + " ", e);
 		}
 	}
 
@@ -676,8 +622,8 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 
 		public void run()
 		{
-			log.info(CLASSNAME + ":" + guid + ": Staring metadata Inject as thread");
-			boolean ok = HTTPProviderMetaDataInjection.injectMetadata(appInst, stream, guid, actualObj);
+			log.info(LOGPREFIX + guid + ": Staring metadata Inject as thread");
+			boolean ok = HTTPProviderMetadataInjection.injectMetadata(appInst, stream, guid, actualObj);
 			ArrayList<Date> successArray = injects.get(guid);
 			String msg = "";
 			if (ok && successArray != null)
@@ -698,7 +644,7 @@ public class HTTPProviderMetaDataInjection extends HTTPProvider2Base
 					}
 				}
 			}
-			log.info(CLASSNAME + ":" + guid + ": Finished metadata Inject as thread. Inserted at:" + msg);
+			log.info(LOGPREFIX + guid + ": Finished metadata Inject as thread. Inserted at:" + msg);
 		}
 	}
 
