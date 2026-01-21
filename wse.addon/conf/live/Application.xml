@@ -259,10 +259,13 @@
 			  <Type>String</Type>
 			</Property>
 			<Property>
-			  <Name>amfToID3ConversionAddToManifest</Name>
+			  <Name>amfToID3ConversionEnabled</Name>
 			  <Value>true</Value>
 			</Property>
-			
+			<Property>
+			  <Name>amfToID3ConversionAddToManifest</Name>
+			  <Value>true</Value>
+			</Property>			
 		</Properties>
 		<ApplicationTimeout>0</ApplicationTimeout>
 		<PingTimeout>0</PingTimeout>
