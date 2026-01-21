@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'com.wowza.wms.plugin.metadatainjection'
-version '1.0.0'
+version '1.5.3'
 
 java {
     toolchain {
