@@ -32,6 +32,7 @@ services:
             - WSE_HOST=http://wse.docker:8087
             - PLAYER_TOKEN=$PLAYER_TOKEN
         volumes:
+            #- ./webpage:/usr/local/tomcat/webapps/ROOT/id3 puts behind WSEM auth
             - ./webpage:/usr/local/tomcat/webapps/id3
         ports:
             - 8088:8080
