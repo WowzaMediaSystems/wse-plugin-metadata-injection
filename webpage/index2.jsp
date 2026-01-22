@@ -14,6 +14,7 @@
 <body>
 <h2>Metadata (AMF/ID3) Test page (Flowplayer)</h2>
 <hr>  
+
 <table style="width:100%">
 
 <tr style="width:100%;vertical-align:top">
@@ -68,7 +69,7 @@ function createPlayer() {
 
   myPlayer = flowplayer("#playerElement", {
     src: document.getElementById('playbackUrl').value,
-    token: "eyJraWQiOiI4bE5LdzJjbU1RUFgiLCJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjIjoie1wiYWNsXCI6NixcImlkXCI6XCI4bE5LdzJjbU1RUFhcIn0iLCJpc3MiOiJGbG93cGxheWVyIn0.-EM_pLS2oEgpq52amBUvWzg6e0hikaqFlq9yZPJ495p7wTtXRfHDlUpJydRjueb_JF5xGK9PbuI9UXKxvYtgKQ",
+    token: "<%= System.getenv("PLAYER_TOKEN") %>",
     autoplay: false,
     title: "ID3 Tags",
     controls: true,
@@ -114,18 +115,18 @@ function createPlayer() {
 
       if(_event != 'programDateTime')
       {
-        allFaces = [];
-        allFaces.push(nowTime + "pdt:" + programDateTime.toLocaleTimeString());
-        allFaces.push(_event);
-        allFaces.push(JSON.stringify(_data, null, 2) );
+        eventString = [];
+        eventString.push(nowTime + "pdt:" + programDateTime.toLocaleTimeString());
+        eventString.push(_event);
+        eventString.push(JSON.stringify(_data, null, 2) );
       }
       
-      if(allFaces.length > 12)
+      if(eventString.length > 12)
       {
-        allFaces.shift();
+        eventString.shift();
       }
 
-      document.getElementById("outputTextScroll").value = allFaces.join("\n");
+      document.getElementById("outputTextScroll").value = eventString.join("\n");
     }
   });
 }
@@ -173,7 +174,7 @@ function sendId3TestData()
 
   credentials = "admin:password";
   encodedCredentials = btoa(credentials);
-  authHeader = `Basic ${encodedCredentials}`;
+  authHeader = 'Basic ' + encodedCredentials;
 
   url = new URL(document.getElementById('playbackUrl').value);
   protocol = url.protocol;
@@ -183,10 +184,13 @@ function sendId3TestData()
   path = url.pathname;
   appname = path.split("/")[1];
   streamname = path.split("/")[2];
+
+  apiUrl = protocol + '//' + host + ':' + port + '/v1/server/plugin/metaDataInjection/applications/' + appname + '/streams/' + streamname;
   document.getElementById("apiOutput").value = "sending..."
   console.log("ID3 Data inserting event:" + id3Message.event+ " with data:"+ JSON.stringify(id3Message));  
+
   $.post({
-    url: `${protocol}//${host}:${port}/v1/server/plugin/metaDataInjection/applications/${appname}/streams/${streamname}`,
+    url: apiUrl,
     type: 'post',
     dataType: 'json',
     contentType: "application/json",
@@ -210,8 +214,6 @@ function sendId3TestData()
     }
   });
 }
-
-
 
 createPlayer();
 </script>
