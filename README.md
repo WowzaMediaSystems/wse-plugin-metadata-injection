@@ -15,6 +15,23 @@ add HTTPProvider
 </HTTPProvider>
 ```  
 
+add Property
+```
+<Property>
+	<Name>optionsCORSHeadersAddMain</Name>
+	<Value>Access-Control-Allow-Headers:metadata-api-key</Value>
+	<Type>String</Type>
+</Property>	
+```
+Optional
+```
+<Property>
+	<Name>metadataApiKey</Name>
+	<Value>secretkey</Value>
+	<Type>String</Type>
+</Property>
+
+```
 ### Application.xml
 Need to turn on Program Date Time for HLS
 Add the following module:
@@ -31,7 +48,7 @@ Add the following module:
 
 | Name                  | Type                                           | Description                                                                      |
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| metadataApiKey             | String   | Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key` |
+| metadataApiKey             | String   | Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key`  Overrides property in vhost.xml if exists|
 | amfToID3ConversionEnabled | Boolean | convert AMF data to ID3 data.  Default true |
 | amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-OBJECT-DETECTION` with guid of event. Default false |
 | amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 

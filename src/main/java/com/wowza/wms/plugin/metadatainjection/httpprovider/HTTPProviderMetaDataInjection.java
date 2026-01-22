@@ -248,6 +248,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 				appName = splits[idx + 1];
 			}
 		}
+		metadataApiKey = vhost.getProperties().getPropertyStr("metadataApiKey", metadataApiKey);
 		if (appName != null)
 		{
 			IApplication app = vhost.getApplication(appName);
@@ -256,7 +257,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 				IApplicationInstance i = app.getAppInstance("_definst_");
 				if (i != null)
 				{
-					metadataApiKey = i.getProperties().getPropertyStr("metadataApiKey", null);
+					metadataApiKey = i.getProperties().getPropertyStr("metadataApiKey", metadataApiKey);
 				}
 			}
 

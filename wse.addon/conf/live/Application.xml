@@ -254,18 +254,13 @@
 				<Type>String</Type>
 			</Property>
 			<Property>
-			  <Name>metadataApiKey</Name>
-			  <Value>secretkey</Value>
-			  <Type>String</Type>
-			</Property>
-			<Property>
 			  <Name>amfToID3ConversionEnabled</Name>
 			  <Value>true</Value>
 			</Property>
 			<Property>
 			  <Name>amfToID3ConversionAddToManifest</Name>
 			  <Value>true</Value>
-			</Property>			
+			</Property>		
 		</Properties>
 		<ApplicationTimeout>0</ApplicationTimeout>
 		<PingTimeout>0</PingTimeout>

@@ -352,22 +352,33 @@
 			<!-- Properties defined are used by the Manager -->
 			<Properties>
 
-            <Property>
-                <Name>webrtcKeyStorePath</Name>
-                <Value>${com.wowza.wms.context.VHostConfigHome}/conf/tls.jks</Value>
-                <Type>String</Type>
-            </Property>
-            <Property>
-                <Name>webrtcKeyStorePassword</Name>
-                <Value>SwX1cyk7ZuRO</Value>
-                <Type>String</Type>
-            </Property>
+	            <Property>
+	                <Name>webrtcKeyStorePath</Name>
+	                <Value>${com.wowza.wms.context.VHostConfigHome}/conf/tls.jks</Value>
+	                <Type>String</Type>
+	            </Property>
+	            <Property>
+	                <Name>webrtcKeyStorePassword</Name>
+	                <Value>SwX1cyk7ZuRO</Value>
+	                <Type>String</Type>
+	            </Property>
 
 			</Properties>
 		</Manager>
 
 		<!-- Properties defined here will be added to the IVHost.getProperties() collection -->
 		<Properties>
+            <Property>
+              <Name>optionsCORSHeadersAddMain</Name>
+              <Value>Access-Control-Allow-Headers:metadata-api-key</Value>
+              <Type>String</Type>
+            </Property>
+			<Property>
+			  <Name>metadataApiKey</Name>
+			  <Value>secretkey</Value>
+			  <Type>String</Type>
+			</Property>
+
 		</Properties>
 	</VHost>
 </Root>

@@ -1,0 +1,200 @@
+<html>
+<head>
+  <title>ID3 Test (Flowplayer)</title>
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/flowplayer.min.js"></script>
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/plugins/hls.min.js"></script>  
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/plugins/qsel.min.js"></script>
+
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/plugins/id3.min.js"></script>  
+  <link rel="stylesheet" href="//cdn.flowplayer.com/releases/native/3/stable/style/flowplayer.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+<h2>Metadata (AMF/ID3) Test page (Flowplayer)</h2>
+<hr>  
+<table style="width:100%">
+
+<tr style="width:100%;vertical-align:top">
+  <td style="width:50%">
+    Playback URL:
+    <br>
+    <input type="text" id="playerUrl" style="width:90%" >
+    <button style="width:8%" onclick="setSrc()">set</button>
+  </td>
+  <td style="width:50%">
+    Last ID3 Event:
+    <br>
+    <textarea id="outputText" style="width:100%">waiting...</textarea>
+  </td>
+</tr>
+<tr style="width:100%;vertical-align:top">
+  <td style="width:50%">
+    Player:
+    <div id="playerElement"></div>
+  </td>
+  <td style="width:50%;height:90">
+    ID3 Events:
+    <textarea id="outputTextScroll" style="width:100%;height:95%"></textarea>
+  </td>
+</tr>
+
+</table>
+<br>
+      <button id='sendQuestionBtn' onclick="sendId3TestData()" class="btn btn-success btn-lg">Send ID3 Data</button>
+          <textarea id="apiOutput" style="width:100%">waiting...</textarea>
+
+
+</body>
+</html>
+
+<script type="text/javascript">
+
+urlParams = new URLSearchParams(window.location.search);
+playerUrl = urlParams.get('src');
+playerUrl ||= "http://localhost/live/mystream/playlist.m3u8"
+document.getElementById('playerUrl').value  = playerUrl;
+
+var myPlayer = null;
+var lastGUIDs = [];
+var allFaces = []
+
+function createPlayer() {
+  console.log("Creating Player");
+  if (myPlayer != null) {
+    myPlayer.destroy();
+  }
+
+  myPlayer = flowplayer("#playerElement", {
+    src: document.getElementById('playerUrl').value,
+    token: "eyJraWQiOiI4bE5LdzJjbU1RUFgiLCJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjIjoie1wiYWNsXCI6NixcImlkXCI6XCI4bE5LdzJjbU1RUFhcIn0iLCJpc3MiOiJGbG93cGxheWVyIn0.-EM_pLS2oEgpq52amBUvWzg6e0hikaqFlq9yZPJ495p7wTtXRfHDlUpJydRjueb_JF5xGK9PbuI9UXKxvYtgKQ",
+    autoplay: false,
+    title: "ID3 Tags",
+    controls: true,
+    ui: flowplayer.ui.USE_PLAY_3
+    }
+  );
+
+  myPlayer.on(flowplayer.id3.events.ID3, async ({data})=> {
+    // console.log(data);
+    // console.log(data.cue);
+    // console.log(data.cue.value);
+
+    _event = data.cue.value.info;
+    _data  = data.cue.value.data;
+
+    var now = new Date(); 
+    nowTime = now.toLocaleTimeString() + " => ";
+
+    document.getElementById("outputText").value = nowTime + _event + ":::" + _data;
+
+    try {
+      _data = JSON.parse(_data);
+      console.log("id3 event: " + _event + " => ");
+      console.log(_data); //log it seperatly so console can show/expand it
+    } catch(e) {
+      //not a json string
+      console.log("id3 event: " + _event + " => " + _data);
+    }
+
+
+    guid = _data.guid;
+    if(!lastGUIDs.includes(guid))
+    {
+      lastGUIDs.push(guid);
+      if(lastGUIDs.length > 10)
+      {
+        lastGUIDs.shift();
+      }
+
+      if(_event != 'programDateTime')
+      {
+        allFaces = []
+        allFaces.push(nowTime + _event)
+        allFaces.push(JSON.stringify(_data, null, 2) );
+      }
+      
+      if(allFaces.length > 12)
+      {
+        allFaces.shift();
+      }
+
+      document.getElementById("outputTextScroll").value = allFaces.join("\n");
+    }
+  });
+}
+
+
+function setSrc() {
+  if (myPlayer != null) {
+    // myPlayer.setSrc(document.getElementById('playerUrl').value);
+    // myPlayer.togglePlay();
+
+    urlParams = new URLSearchParams(window.location.search);
+    urlParams.set("src", document.getElementById('playerUrl').value);
+    window.location.search = urlParams.toString();
+
+  }
+}
+
+function sendId3TestData()
+{
+  var id3Message = new Object();
+  id3Message.event = "test-event";
+  id3Message.async = true;
+  id3Message.delay = 5000;
+  id3Message.repeat=3;
+  id3Message.interval=500;
+  id3Message.injectTime=true;
+  id3Message.id3=true;
+
+  id3Message.data = new Object()
+  id3Message.data.stringTest = "apple";
+  id3Message.data.intTest = 123;
+  id3Message.data.boolTest = true;
+  id3Message.data.doubleTest = 1.234;
+  id3Message.data.longTest = 1234567890123;
+  id3Message.data.bitIntTest = 12345678901234567890;
+  id3Message.data.array1Test = [1, 2, 3];
+  a1 = new Object();
+  a1.q1 = "one";
+  a2 = new Object();
+  a2.q2 = "two";
+  id3Message.data.array2Test = [ a1, a2 ];
+  id3Message.data.objectTest = new Object();
+  id3Message.data.objectTest.name = "gpa";
+  id3Message.data.objectTest.age = 13;
+
+
+
+  console.log("ID3 Data inserting event:" + id3Message.event+ " with data:"+ JSON.stringify(id3Message));  
+  $.post({
+    url: 'http://127.0.0.1/v1/server/plugin/metaDataInjection/applications/live/streams/mystream',
+    type: 'post',
+    dataType: 'json',
+    contentType: "application/json",
+    headers: {
+        "metadata-api-key": "secretkey"
+    },
+    data: JSON.stringify(id3Message),
+    success: function (okdata) {
+      console.log("ID3 Sent:"+okdata.guid);
+      var now = new Date(); 
+      nowTime = now.toLocaleTimeString() + " => ";
+      document.getElementById("apiOutput").value = nowTime + okdata.guid;
+
+    },
+    error: function (xhr, ajaxOptions, thrownError) {
+      console.log("ID3 Data failed event:" + xhr.status + "=>" + xhr.responseText);
+      var now = new Date(); 
+      nowTime = now.toLocaleTimeString() + " => ";
+      document.getElementById("apiOutput").value = nowTime + xhr.responseText;
+    }
+  });
+}
+
+
+
+createPlayer();
+</script>
