@@ -60,7 +60,8 @@
 					<HTTPProvider>
 						<BaseClass>com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetadataInjection</BaseClass>
 						<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
-						<AuthenticationMethod>none</AuthenticationMethod>
+						<AuthenticationMethod>admin-basic</AuthenticationMethod>
+						<PasswordEncodingScheme>none</PasswordEncodingScheme>
 					</HTTPProvider>
 				</HTTPProviders>
 			</HostPort>
@@ -369,10 +370,19 @@
 		<!-- Properties defined here will be added to the IVHost.getProperties() collection -->
 		<Properties>
             <Property>
+              <Name>useMetadataApiKey</Name>
+              <Value>false</Value>
+            </Property>
+            <Property>
+              <Name>optionsCORSHeadersAddMain</Name>
+              <Value>Access-Control-Allow-Headers:authorization</Value>
+              <Type>String</Type>
+            </Property>
+<!--             <Property>
               <Name>optionsCORSHeadersAddMain</Name>
               <Value>Access-Control-Allow-Headers:metadata-api-key</Value>
               <Type>String</Type>
-            </Property>
+            </Property> -->
 			<Property>
 			  <Name>metadataApiKey</Name>
 			  <Value>secretkey</Value>

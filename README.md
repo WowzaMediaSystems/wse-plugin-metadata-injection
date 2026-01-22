@@ -11,11 +11,18 @@ add HTTPProvider
 <HTTPProvider>
 	<BaseClass>com.wowza.wms.plugin.cloud.httpprovider.HTTPProviderMetadataInjection</BaseClass>
 	<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
-	<AuthenticationMethod>none</AuthenticationMethod>
+	<AuthenticationMethod>admin-basic</AuthenticationMethod>
+	<PasswordEncodingScheme>none</PasswordEncodingScheme>
 </HTTPProvider>
 ```  
 
 add Property
+            <Property>
+              <Name>useMetadataApiKey</Name>
+              <Value>true</Value>
+            </Property>
+
+add Property, update to either metadata-api-key or authorization
 ```
 <Property>
 	<Name>optionsCORSHeadersAddMain</Name>

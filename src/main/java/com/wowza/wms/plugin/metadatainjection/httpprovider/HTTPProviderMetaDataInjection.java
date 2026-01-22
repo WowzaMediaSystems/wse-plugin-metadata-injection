@@ -26,6 +26,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 	private static HashMap<String,Integer> countVerboseMessages = new HashMap<String, Integer>();
 	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<String,Integer>();
 	static WMSLogger log = null;
+
 	private static LinkedHashMap<String, ArrayList<Date>> injects = new LinkedHashMap<String, ArrayList<Date>>(MAXGUIDLIST)
 	{
 		@Override
@@ -38,11 +39,11 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 	public HTTPProviderMetadataInjection()
 	{
 		log = WMSLoggerFactory.getLogger(HTTPProviderMetadataInjection.class);
-		log.info(LOGPREFIX + "Started v" + ID3AndPDTInjectionModule.MODULE_VERSION);
 	}
 
 	public void onBind(IVHost vhost, HostPort hostPort)
 	{
+		log.info(LOGPREFIX + "Started v" + ID3AndPDTInjectionModule.MODULE_VERSION + " port:" + hostPort);
 		super.onBind(vhost, hostPort);
 	}
 
@@ -238,6 +239,12 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 	@Override
 	public boolean doHTTPAuthentication(IVHost vhost, IHTTPRequest req, IHTTPResponse resp)
 	{
+		boolean useMetadataApiKey = vhost.getProperties().getPropertyBoolean("useMetadataApiKey", false);
+		if(!useMetadataApiKey)
+		{
+			return super.doHTTPAuthentication(vhost, req, resp);
+		}
+
 		String metadataApiKey = null;
 		String appName = null;
 		String[] splits = req.getRequestURL().split("/");
@@ -272,8 +279,6 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 				return false;
 			}
 		}
-		if (authenticateHTTPProviderHandler != null)
-			return authenticateHTTPProviderHandler.authenticateHTTPProvider(vhost, req, resp);
 		return true;
 	}
 

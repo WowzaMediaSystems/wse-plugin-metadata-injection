@@ -166,7 +166,9 @@ function sendId3TestData()
   id3Message.data.objectTest.name = "gpa";
   id3Message.data.objectTest.age = 13;
 
-
+  credentials = "admin:password";
+  encodedCredentials = btoa(credentials);
+  authHeader = `Basic ${encodedCredentials}`;
 
   console.log("ID3 Data inserting event:" + id3Message.event+ " with data:"+ JSON.stringify(id3Message));  
   $.post({
@@ -175,7 +177,8 @@ function sendId3TestData()
     dataType: 'json',
     contentType: "application/json",
     headers: {
-        "metadata-api-key": "secretkey"
+        // "metadata-api-key": "secretkey"
+        "Authorization": authHeader,
     },
     data: JSON.stringify(id3Message),
     success: function (okdata) {
@@ -189,7 +192,7 @@ function sendId3TestData()
       console.log("ID3 Data failed event:" + xhr.status + "=>" + xhr.responseText);
       var now = new Date(); 
       nowTime = now.toLocaleTimeString() + " => ";
-      document.getElementById("apiOutput").value = nowTime + xhr.responseText;
+      document.getElementById("apiOutput").value = nowTime + "Error: " + xhr.status + ":" + xhr.responseText;
     }
   });
 }
