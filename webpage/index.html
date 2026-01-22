@@ -20,13 +20,13 @@
   <td style="width:50%">
     Playback URL:
     <br>
-    <input type="text" id="playerUrl" style="width:90%" >
-    <button style="width:8%" onclick="setSrc()">set</button>
+    <input type="text" id="playbackUrl" style="width:90%" >
+    <button style="width:8%" onclick="setSrc()">Play</button>
   </td>
   <td style="width:50%">
-    Last ID3 Event:
+    Program Date Time:
     <br>
-    <textarea id="outputText" style="width:100%">waiting...</textarea>
+    <textarea id="programDateTime" style="width:100%">waiting...</textarea>
   </td>
 </tr>
 <tr style="width:100%;vertical-align:top">
@@ -52,13 +52,13 @@
 <script type="text/javascript">
 
 urlParams = new URLSearchParams(window.location.search);
-playerUrl = urlParams.get('src');
-playerUrl ||= "http://localhost/live/mystream/playlist.m3u8"
-document.getElementById('playerUrl').value  = playerUrl;
+playbackUrl = urlParams.get('src');
+playbackUrl ||= "http://localhost/live/mystream/playlist.m3u8"
+document.getElementById('playbackUrl').value  = playbackUrl;
 
 var myPlayer = null;
 var lastGUIDs = [];
-var allFaces = []
+var programDateTime= null;
 
 function createPlayer() {
   console.log("Creating Player");
@@ -67,7 +67,7 @@ function createPlayer() {
   }
 
   myPlayer = flowplayer("#playerElement", {
-    src: document.getElementById('playerUrl').value,
+    src: document.getElementById('playbackUrl').value,
     token: "eyJraWQiOiI4bE5LdzJjbU1RUFgiLCJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjIjoie1wiYWNsXCI6NixcImlkXCI6XCI4bE5LdzJjbU1RUFhcIn0iLCJpc3MiOiJGbG93cGxheWVyIn0.-EM_pLS2oEgpq52amBUvWzg6e0hikaqFlq9yZPJ495p7wTtXRfHDlUpJydRjueb_JF5xGK9PbuI9UXKxvYtgKQ",
     autoplay: false,
     title: "ID3 Tags",
@@ -87,7 +87,6 @@ function createPlayer() {
     var now = new Date(); 
     nowTime = now.toLocaleTimeString() + " => ";
 
-    document.getElementById("outputText").value = nowTime + _event + ":::" + _data;
 
     try {
       _data = JSON.parse(_data);
@@ -98,6 +97,11 @@ function createPlayer() {
       console.log("id3 event: " + _event + " => " + _data);
     }
 
+    if(_event == 'programDateTime')
+    {
+      programDateTime = new Date(_data);
+      document.getElementById("programDateTime").value = programDateTime;
+    }
 
     guid = _data.guid;
     if(!lastGUIDs.includes(guid))
@@ -110,8 +114,9 @@ function createPlayer() {
 
       if(_event != 'programDateTime')
       {
-        allFaces = []
-        allFaces.push(nowTime + _event)
+        allFaces = [];
+        allFaces.push(nowTime + "pdt:" + programDateTime.toLocaleTimeString());
+        allFaces.push(_event);
         allFaces.push(JSON.stringify(_data, null, 2) );
       }
       
@@ -128,11 +133,11 @@ function createPlayer() {
 
 function setSrc() {
   if (myPlayer != null) {
-    // myPlayer.setSrc(document.getElementById('playerUrl').value);
+    // myPlayer.setSrc(document.getElementById('playbackUrl').value);
     // myPlayer.togglePlay();
 
     urlParams = new URLSearchParams(window.location.search);
-    urlParams.set("src", document.getElementById('playerUrl').value);
+    urlParams.set("src", document.getElementById('playbackUrl').value);
     window.location.search = urlParams.toString();
 
   }
@@ -170,9 +175,18 @@ function sendId3TestData()
   encodedCredentials = btoa(credentials);
   authHeader = `Basic ${encodedCredentials}`;
 
+  url = new URL(document.getElementById('playbackUrl').value);
+  protocol = url.protocol;
+  host = url.host;
+  port = url.port;
+  port = 1935; //WSE appears to have issues with OPTIONS request on port 80
+  path = url.pathname;
+  appname = path.split("/")[1];
+  streamname = path.split("/")[2];
+  document.getElementById("apiOutput").value = "sending..."
   console.log("ID3 Data inserting event:" + id3Message.event+ " with data:"+ JSON.stringify(id3Message));  
   $.post({
-    url: 'http://127.0.0.1/v1/server/plugin/metaDataInjection/applications/live/streams/mystream',
+    url: `${protocol}//${host}:${port}/v1/server/plugin/metaDataInjection/applications/${appname}/streams/${streamname}`,
     type: 'post',
     dataType: 'json',
     contentType: "application/json",
