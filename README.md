@@ -1,6 +1,6 @@
-# Wowza Streaming Engine Metadata Injection
+# Wowza Streaming Engine Metadata Injection Plugin
 
-This module provides a rest API to added metadata to a live stream. This is done by injecting AMFData which can be converted to ID3.  A GUID is created for each event sent and returned back after a POST
+This module provides a rest API to added metadata to a live stream. This is done by injecting AMFData which can then be converted to ID3 tags.  A GUID is created for each event sent and returned int the HTTP POST request.
 
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
@@ -26,7 +26,7 @@ After building the module, start Wowza Streaming Engine and Wowza Streaming Engi
 docker compose up
 ```
 
-2. View the stream on a [sample player page](http://wse-trial.wowza.com:8088/id3/index.html?src=http://wse-trial.wowza.com/live/myStream/playlist.m3u8) will insert ID3 tags and show them as they come in along with the Program Date Time using the stream `http://wse-trial.wowza.com/live/myStream/playlist.m3u8`
+2. View the stream on the provided [sample player page](http://wse-trial.wowza.com:8088/id3/index.html?src=http://wse-trial.wowza.com/live/myStream/playlist.m3u8).  This will insert ID3 tags and show them as they are received on this HLS stream `http://wse-trial.wowza.com/live/myStream/playlist.m3u8`
 
 
 ## Install on existing WSE instance
@@ -70,8 +70,7 @@ Optional
 
 ```
 ### Application.xml
-Need to turn on Program Date Time for HLS
-Add the following module:
+Need to turn on Program Date Time for HLS by adding the following module:
 ```
 <Module>
 	<Name>ID3AndPDTInjectionModule</Name>
@@ -103,13 +102,13 @@ Add the following module:
 ## API
 ### API patterns is
 * `v1/server/plugin/metaDataInjection/applications/{appName}/streams/{streamName}`
-* can use header value `metadata-api-key` for authorization
+* opitional header value `metadata-api-key` for authorization
 
 ### API supports methods/verbs
 `GET | POST `
 
-### Metadata 
-A json object can be passed into the video stream 
+### Payload (JSON)
+
 #### Properties
 | Property      | Description                                              |
 |:--------------|:---------------------------------------------------------|
