@@ -1,7 +1,37 @@
-# Metadata Injection
+# Wowza Streaming Engine Metadata Injection
+
 This module provides a rest API to added metadata to a live stream. This is done by injecting AMFData which can be converted to ID3.  A GUID is created for each event sent and returned back after a POST
 
-## Install
+This module leverages the WSE classes:
+* `HTTPProvider2Base`: support of using a REST API with engine
+* `ModuleBase`: support for accessing the LiveStreamPacktizers
+* `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access media segments to add AMFData, convert to ID3, and inster Program Date Time
+
+## Prerequisites
+
+* Wowza Streaming Engine™ 4.9.4 or later is required
+
+## Build instructions
+
+1. Clone this repository to your local filesystem.
+2. Run `./build.sh`  This will build the module/jar file with the `wse-plugin-builder` using docker
+
+## Run the Demo
+
+After building the module, start Wowza Streaming Engine and Wowza Streaming Engine Manager using the docker-compose.yaml file in this repository. It includes a pre-configured Wowza Streaming Engine instance and sample `live` and `simu-live` applications.
+
+1. Run the following command to launch WSE and WSEM:
+
+```bash
+docker compose up
+```
+
+2. View the stream on a [sample player page](http://wse-trial.wowza.com:8088/id3/index.html?src=http://wse-trial.wowza.com/live/myStream/playlist.m3u8) will insert ID3 tags and show them as they come in along with the Program Date Time using the stream `http://wse-trial.wowza.com/live/myStream/playlist.m3u8`
+
+
+## Install on existing WSE instance
+
+
 * copy wse-plugin-metadata-injection jar to lib folder
 
 ### VHost.xml 
