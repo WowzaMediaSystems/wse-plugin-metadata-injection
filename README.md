@@ -5,7 +5,7 @@ This module provides a REST API to add metadata to a live stream. This is done b
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
 * `ModuleBase`: support for accessing the LiveStreamPacktizers
-* `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access media segments to add AMFData, convert to ID3, and inster Program Date Time
+* `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access media segments to add AMFData, convert to ID3, and insert Program Date Time
 
 ## Prerequisites
 
