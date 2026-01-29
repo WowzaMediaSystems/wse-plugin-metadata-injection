@@ -1,6 +1,6 @@
 # Wowza Streaming Engine Metadata Injection Plugin
 
-This module provides a rest API to added metadata to a live stream. This is done by injecting AMFData which can then be converted to ID3 tags.  A GUID is created for each event sent and returned int the HTTP POST request.
+This module provides a REST API to add metadata to a live stream. This is done by injecting AMFData which can then be converted to ID3 tags.  A GUID is created for each event sent and returned in the HTTP POST request.
 
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
