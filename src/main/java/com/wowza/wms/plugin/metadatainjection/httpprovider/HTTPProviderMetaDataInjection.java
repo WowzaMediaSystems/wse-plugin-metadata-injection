@@ -271,7 +271,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		}
 		if (metadataApiKey != null && !metadataApiKey.isEmpty())
 		{
-			//and metadatApiKey is defined, make sure its valid
+			//and metadataApiKey is defined, make sure its valid
 			if (!metadataApiKey.equals(req.getHeader("metadata-api-key")))
 			{
 				log.warn(LOGPREFIX + "metadataApiKey defined but not valid from request");
