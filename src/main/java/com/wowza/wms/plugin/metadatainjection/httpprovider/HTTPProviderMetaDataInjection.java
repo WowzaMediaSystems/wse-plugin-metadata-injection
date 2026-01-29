@@ -628,7 +628,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 		public void run()
 		{
-			log.info(LOGPREFIX + guid + ": Staring metadata Inject as thread");
+			log.info(LOGPREFIX + guid + ": Starting metadata Inject as thread");
 			boolean ok = HTTPProviderMetadataInjection.injectMetadata(appInst, stream, guid, actualObj);
 			ArrayList<Date> successArray = injects.get(guid);
 			String msg = "";
