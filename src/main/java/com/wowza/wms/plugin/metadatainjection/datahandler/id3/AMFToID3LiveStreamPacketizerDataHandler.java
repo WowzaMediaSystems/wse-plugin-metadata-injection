@@ -119,7 +119,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 								{
 									guid = obj.get("guid").asText();
 								}
-								if (guid != null && !guid.isEmpty() && event != null && !event.isEmpty() && event != "programDateTime")
+								if (guid != null && !guid.isEmpty() && event != null && !event.isEmpty() && !event.equals("programDateTime"))
 								{
 									userManifestHeaders.addHeader("EXT-X-METADATA-EVENT-" + event.toUpperCase(), guid);
 								}
