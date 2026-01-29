@@ -55,7 +55,6 @@ public class AMFToID3ApplicationsManager
 			appInstName = IApplicationInstance.DEFAULT_APPINSTANCE_NAME;
 
 		String id = appName + "|" + appInstName + "|" + streamName;
-		System.out.println("ID:" + id);
 		return id;
 	}
 

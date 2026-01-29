@@ -66,13 +66,6 @@
 			<ServerListener>
 				<BaseClass>com.wowza.wms.mediacache.impl.MediaCacheServerListener</BaseClass>
 			</ServerListener>
-      
-			
-			
-			
-			
-			
-			
 			<ServerListener>
 				<BaseClass>com.wowza.wms.module.ServerListenerStreamDemoPublisher</BaseClass>
 			</ServerListener>
