@@ -5,8 +5,6 @@ import com.wowza.wms.logging.WMSLoggerFactory;
 
 public class AMFToID3ConverterStreamController
 {
-	private IApplicationInstance appInstance;
-	private String streamName;
 	private boolean dataConversionEnabled = false;
 	private int maxVerboseConversionMessages = 5;
 	private int maxFailedConversionMessages = 5;
@@ -15,9 +13,6 @@ public class AMFToID3ConverterStreamController
 
 	public AMFToID3ConverterStreamController(IApplicationInstance appInstance, String streamName)
 	{
-		this.appInstance = appInstance;
-		this.streamName = streamName;
-
 		// Properties
 		maxVerboseConversionMessages = appInstance.getProperties()
 				.getPropertyInt("amfToID3ConversionVerboseMaximum", maxVerboseConversionMessages);

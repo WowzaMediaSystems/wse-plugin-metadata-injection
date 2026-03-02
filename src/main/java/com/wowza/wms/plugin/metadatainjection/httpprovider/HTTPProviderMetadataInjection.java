@@ -23,8 +23,8 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 	private static final int MAXREPEATDELAY = 5000; //5 seconds
 	private static final String LOGPREFIX = "MetadataInjection:";
 
-	private static HashMap<String,Integer> countVerboseMessages = new HashMap<String, Integer>();
-	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<String,Integer>();
+	private static HashMap<String,Integer> countVerboseMessages = new HashMap<>();
+	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<>();
 	static WMSLogger log = null;
 
 	private static LinkedHashMap<String, ArrayList<Date>> injects = new LinkedHashMap<String, ArrayList<Date>>(MAXGUIDLIST)
@@ -78,7 +78,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 							ArrayList<Date> successArray = injects.get(guid);
 							OutputStream out = resp.getOutputStream();
 							String msg = "{}";
-							if (successArray == null || successArray.size() == 0)
+							if (successArray == null || successArray.isEmpty())
 							{
 								msg = "{\"status\":\"waiting\", \"guid\":\"" + guid + "\", \"count\":" + 0 + ", \"inserted_at\":[]}";
 							}

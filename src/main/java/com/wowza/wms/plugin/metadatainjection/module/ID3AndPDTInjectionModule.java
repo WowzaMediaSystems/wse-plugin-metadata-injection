@@ -1,17 +1,20 @@
 package com.wowza.wms.plugin.metadatainjection.module;
 
-import com.wowza.wms.plugin.metadatainjection.*;
-import com.wowza.wms.plugin.metadatainjection.datahandler.*;
-import com.wowza.wms.plugin.metadatainjection.httpprovider.*;
-import com.wowza.wms.plugin.metadatainjection.datahandler.pdt.*;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.*;
-
-import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.amf.AMFPacket;
-import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.*;
+import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoPacketHolder;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.IHTTPStreamerCupertinoLivePacketizerDataHandler2;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertino;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertinoChunk;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.module.ModuleBase;
-import com.wowza.wms.stream.livepacketizer.*;
+import com.wowza.wms.plugin.metadatainjection.ReleaseInfo;
+import com.wowza.wms.plugin.metadatainjection.datahandler.IHTTPStreamerCupertinoLivePacketizerMultiDataHandler;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3LiveStreamPacketizerDataHandler;
+import com.wowza.wms.plugin.metadatainjection.datahandler.pdt.PDTLiveStreamPacketizerDataHandler;
+import com.wowza.wms.stream.livepacketizer.ILiveStreamPacketizer;
+import com.wowza.wms.stream.livepacketizer.LiveStreamPacketizerActionNotifyBase;
 
 public class ID3AndPDTInjectionModule extends ModuleBase
 {
@@ -27,14 +30,12 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 	class LiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2
 	{
 		private LiveStreamPacketizerCupertino packetizer = null;
-		private String streamName = null;
 		private IHTTPStreamerCupertinoLivePacketizerMultiDataHandler pdt = null;
 		private IHTTPStreamerCupertinoLivePacketizerMultiDataHandler amfToID3 = null;
 
 		public LiveStreamPacketizerDataHandler(LiveStreamPacketizerCupertino packetizer, String streamName)
 		{
 			this.packetizer = packetizer;
-			this.streamName = streamName;
 
 			pdt = new PDTLiveStreamPacketizerDataHandler(appInstance, packetizer, streamName);
 			amfToID3 = new AMFToID3LiveStreamPacketizerDataHandler(appInstance, packetizer, streamName);
