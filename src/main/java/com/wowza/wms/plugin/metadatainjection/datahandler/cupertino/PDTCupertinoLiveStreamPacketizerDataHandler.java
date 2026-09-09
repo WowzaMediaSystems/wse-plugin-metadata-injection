@@ -11,6 +11,7 @@ import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.application.WMSProperties;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoPacketHolder;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.IHTTPStreamerCupertinoLivePacketizerDataHandler2;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertino;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertinoChunk;
 import com.wowza.wms.logging.WMSLoggerFactory;
@@ -18,7 +19,7 @@ import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
 import com.wowza.wms.stream.IMediaStream;
 
-public class PDTCupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler
+public class PDTCupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2
 {
 
 	public static final String MODULE_NAME = "ModuleCupertinoProgramDateTime";
@@ -158,7 +159,6 @@ public class PDTCupertinoLiveStreamPacketizerDataHandler implements IHTTPStreame
 		}
 	}
 
-	@Override
 	public boolean isEnabled()
 	{
 		return this.enableId3ProgramDateTime || this.enableProgramDateTime;

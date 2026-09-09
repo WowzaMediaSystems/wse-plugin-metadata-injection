@@ -7,6 +7,7 @@ import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoPacketHolder;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoUserManifestHeaders;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.IHTTPStreamerCupertinoLivePacketizerDataHandler2;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertino;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertinoChunk;
 import com.wowza.wms.logging.WMSLoggerFactory;
@@ -19,7 +20,7 @@ import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterC
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.IAMFToID3DataHandler;
 
-public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler, IAMFToID3DataHandler
+public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2, IAMFToID3DataHandler
 {
 	private IApplicationInstance appInstance;
 	private LiveStreamPacketizerCupertino packetizer;

@@ -6,11 +6,11 @@ import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.httpstreamer.cmafstreaming.livestreampacketizer.LiveStreamPacketizerCmaf;
 import com.wowza.wms.httpstreamer.model.LiveStreamPacketizerPacketHolder;
 import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStreams;
+import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPStreamerMPEGDashLivePacketizerDataHandler;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.metadata.emsg.IEmsgFrame;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
-import com.wowza.wms.plugin.metadatainjection.datahandler.emsg.ID3EmsgUtils;
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3Converter;
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterContext;
@@ -23,7 +23,7 @@ import com.wowza.wms.plugin.metadatainjection.datahandler.id3.IAMFToID3DataHandl
  * {@link AMFToID3CupertinoLiveStreamPacketizerDataHandler} and shares the same converters, controller,
  * and application properties.
  */
-public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler, IAMFToID3DataHandler
+public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerDataHandler, IAMFToID3DataHandler
 {
 	private final IApplicationInstance appInstance;
 	private final LiveStreamPacketizerCmaf packetizer;

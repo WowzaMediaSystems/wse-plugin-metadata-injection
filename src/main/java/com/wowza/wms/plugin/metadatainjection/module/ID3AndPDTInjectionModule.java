@@ -14,10 +14,8 @@ import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.module.ModuleBase;
 import com.wowza.wms.plugin.metadatainjection.ReleaseInfo;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.AMFToID3CmafLiveStreamPacketizerDataHandler;
-import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.PDTCmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
-import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.IHTTPStreamerCupertinoLivePacketizerMultiDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
 import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
@@ -51,7 +49,7 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 	class LiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2
 	{
 		private LiveStreamPacketizerCupertino packetizer = null;
-		private IHTTPStreamerCupertinoLivePacketizerMultiDataHandler pdt = null;
+		private PDTCupertinoLiveStreamPacketizerDataHandler pdt = null;
 		private AMFToID3CupertinoLiveStreamPacketizerDataHandler amfToID3 = null;
 
 		public LiveStreamPacketizerDataHandler(LiveStreamPacketizerCupertino packetizer, String streamName)
@@ -122,7 +120,7 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 	 */
 	class CmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerDataHandler
 	{
-		private IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler pdt = null;
+		private PDTCmafLiveStreamPacketizerDataHandler pdt = null;
 		private AMFToID3CmafLiveStreamPacketizerDataHandler amfToID3 = null;
 
 		public CmafLiveStreamPacketizerDataHandler(LiveStreamPacketizerCmaf packetizer, String streamName)

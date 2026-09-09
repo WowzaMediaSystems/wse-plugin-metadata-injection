@@ -13,11 +13,11 @@ import com.wowza.wms.application.WMSProperties;
 import com.wowza.wms.httpstreamer.cmafstreaming.livestreampacketizer.LiveStreamPacketizerCmaf;
 import com.wowza.wms.httpstreamer.model.LiveStreamPacketizerPacketHolder;
 import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStreams;
+import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPStreamerMPEGDashLivePacketizerDataHandler;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
-import com.wowza.wms.plugin.metadatainjection.datahandler.emsg.ID3EmsgUtils;
 import com.wowza.wms.stream.IMediaStream;
 
 /**
@@ -28,7 +28,7 @@ import com.wowza.wms.stream.IMediaStream;
  * EXT-X-PROGRAM-DATE-TIME for CMAF HLS chunklists is handled natively by Wowza Streaming Engine
  * (cmafEnableProgramDateTime), so this handler only emits the ID3/emsg tag.
  */
-public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler
+public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerDataHandler
 {
 	public static final String MODULE_NAME = "ModuleCmafProgramDateTime";
 	public static final String ID3_DESCRIPTION = "programDateTime";
@@ -121,7 +121,6 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 		// no-op
 	}
 
-	@Override
 	public boolean isEnabled()
 	{
 		return enableId3ProgramDateTime;

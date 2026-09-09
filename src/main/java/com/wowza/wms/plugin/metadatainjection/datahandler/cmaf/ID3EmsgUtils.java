@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.emsg;
+package com.wowza.wms.plugin.metadatainjection.datahandler.cmaf;
 
 import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStream;
 import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStreams;
