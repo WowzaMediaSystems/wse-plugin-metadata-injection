@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler;
+package com.wowza.wms.plugin.metadatainjection.datahandler.cmaf;
 
 import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPStreamerMPEGDashLivePacketizerDataHandler;
 

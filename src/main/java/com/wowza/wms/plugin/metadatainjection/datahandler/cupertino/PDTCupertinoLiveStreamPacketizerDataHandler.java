@@ -1,19 +1,24 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.pdt;
+package com.wowza.wms.plugin.metadatainjection.datahandler.cupertino;
 
-import com.wowza.util.*;
-import com.wowza.wms.amf.AMFPacket;
-import com.wowza.wms.application.*;
-import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.*;
-import com.wowza.wms.logging.WMSLoggerFactory;
-import com.wowza.wms.media.mp3.model.idtags.*;
-import com.wowza.wms.stream.IMediaStream;
+import java.util.Date;
+import java.util.Locale;
+
 import org.apache.commons.lang.time.FastDateFormat;
 
-import com.wowza.wms.plugin.metadatainjection.datahandler.*;
+import com.wowza.util.ElapsedTimer;
+import com.wowza.util.SystemUtils;
+import com.wowza.wms.amf.AMFPacket;
+import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.application.WMSProperties;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoPacketHolder;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertino;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertinoChunk;
+import com.wowza.wms.logging.WMSLoggerFactory;
+import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
+import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
+import com.wowza.wms.stream.IMediaStream;
 
-import java.util.*;
-
-public class PDTLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler
+public class PDTCupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler
 {
 
 	public static final String MODULE_NAME = "ModuleCupertinoProgramDateTime";
@@ -31,7 +36,7 @@ public class PDTLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertin
 	private String streamName = null;
 	private LiveStreamPacketizerCupertino packetizer = null;
 
-	public PDTLiveStreamPacketizerDataHandler(IApplicationInstance appInstance,
+	public PDTCupertinoLiveStreamPacketizerDataHandler(IApplicationInstance appInstance,
 			LiveStreamPacketizerCupertino liveStreamPacketizer, String streamName)
 	{
 		this.appInstance = appInstance;
@@ -48,7 +53,7 @@ public class PDTLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertin
 		cupertinoProgramDateTimeOffset = httpProps.getPropertyLong("cupertinoProgramDateTimeOffset",
 				cupertinoProgramDateTimeOffset);
 		cupertinoProgramDateTimeOffset = props.getPropertyLong("cupertinoProgramDateTimeOffset", cupertinoProgramDateTimeOffset);
-		WMSLoggerFactory.getLogger(PDTLiveStreamPacketizerDataHandler.class)
+		WMSLoggerFactory.getLogger(PDTCupertinoLiveStreamPacketizerDataHandler.class)
 				.info(MODULE_NAME + "Running with cupertinoEnableProgramDateTime:" + enableProgramDateTime + " cupertinoEnableId3ProgramDateTime:" + enableId3ProgramDateTime);
 
 	}

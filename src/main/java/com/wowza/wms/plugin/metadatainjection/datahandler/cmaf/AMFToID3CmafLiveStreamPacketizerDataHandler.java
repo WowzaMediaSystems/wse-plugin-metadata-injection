@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.datahandler.cmaf;
 
 import com.wowza.wms.amf.AMFDataList;
 import com.wowza.wms.amf.AMFPacket;
@@ -9,13 +9,18 @@ import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStreams;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.metadata.emsg.IEmsgFrame;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
-import com.wowza.wms.plugin.metadatainjection.datahandler.IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler;
+import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.emsg.ID3EmsgUtils;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3Converter;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterContext;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.IAMFToID3DataHandler;
 
 /**
  * Converts injected AMF data events into ID3 frames and delivers them in CMAF segments as
  * emsg boxes (scheme {@code https://aomedia.org/emsg/ID3}). This is the CMAF counterpart of
- * {@link AMFToID3LiveStreamPacketizerDataHandler} and shares the same converters, controller,
+ * {@link AMFToID3CupertinoLiveStreamPacketizerDataHandler} and shares the same converters, controller,
  * and application properties.
  */
 public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler, IAMFToID3DataHandler

@@ -1,15 +1,25 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.datahandler.cupertino;
 
-import com.fasterxml.jackson.databind.*;
-import com.wowza.wms.amf.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wowza.wms.amf.AMFDataList;
+import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
-import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.*;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoPacketHolder;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoUserManifestHeaders;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertino;
+import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertinoChunk;
 import com.wowza.wms.logging.WMSLoggerFactory;
-import com.wowza.wms.media.mp3.model.idtags.*;
+import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
+import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
+import com.wowza.wms.media.mp3.model.idtags.IID3V2Frame;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3Converter;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterContext;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
+import com.wowza.wms.plugin.metadatainjection.datahandler.id3.IAMFToID3DataHandler;
 
-import com.wowza.wms.plugin.metadatainjection.datahandler.*;
-
-public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler, IAMFToID3DataHandler
+public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler, IAMFToID3DataHandler
 {
 	private IApplicationInstance appInstance;
 	private LiveStreamPacketizerCupertino packetizer;
@@ -24,7 +34,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 	private boolean enabled = false;
 	private String internalTest;
 
-	public AMFToID3LiveStreamPacketizerDataHandler(IApplicationInstance appInstance,
+	public AMFToID3CupertinoLiveStreamPacketizerDataHandler(IApplicationInstance appInstance,
 			LiveStreamPacketizerCupertino liveStreamPacketizer, String streamName)
 	{
 		this.appInstance = appInstance;
@@ -129,7 +139,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 				}
 				catch (Exception e)
 				{
-					WMSLoggerFactory.getLogger(AMFToID3LiveStreamPacketizerDataHandler.class).error(e);
+					WMSLoggerFactory.getLogger(AMFToID3CupertinoLiveStreamPacketizerDataHandler.class).error(e);
 				}
 			}
 			break;

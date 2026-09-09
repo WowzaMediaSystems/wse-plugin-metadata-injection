@@ -1,4 +1,9 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.pdt;
+package com.wowza.wms.plugin.metadatainjection.datahandler.cmaf;
+
+import java.util.Date;
+import java.util.Locale;
+
+import org.apache.commons.lang.time.FastDateFormat;
 
 import com.wowza.util.ElapsedTimer;
 import com.wowza.util.SystemUtils;
@@ -11,18 +16,14 @@ import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStreams;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
-import com.wowza.wms.plugin.metadatainjection.datahandler.IHTTPStreamerMPEGDashLivePacketizerMultiDataHandler;
+import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.emsg.ID3EmsgUtils;
 import com.wowza.wms.stream.IMediaStream;
-import org.apache.commons.lang.time.FastDateFormat;
-
-import java.util.Date;
-import java.util.Locale;
 
 /**
  * Adds a "programDateTime" ID3 TXXX frame, wrapped in an emsg box, at the start of each CMAF
  * segment. This is the CMAF counterpart of the ID3 program-date-time tag written by
- * {@link PDTLiveStreamPacketizerDataHandler} for HLS/TS chunks.
+ * {@link PDTCupertinoLiveStreamPacketizerDataHandler} for HLS/TS chunks.
  * <p>
  * EXT-X-PROGRAM-DATE-TIME for CMAF HLS chunklists is handled natively by Wowza Streaming Engine
  * (cmafEnableProgramDateTime), so this handler only emits the ID3/emsg tag.
@@ -33,7 +34,7 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 	public static final String ID3_DESCRIPTION = "programDateTime";
 
 	private final IApplicationInstance appInstance;
-	private final FastDateFormat id3DateString = FastDateFormat.getInstance(PDTLiveStreamPacketizerDataHandler.ID3DATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
+	private final FastDateFormat id3DateString = FastDateFormat.getInstance(PDTCupertinoLiveStreamPacketizerDataHandler.ID3DATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
 
 	private boolean enableId3ProgramDateTime = true;
 	private long programDateTimeOffset = 0;
