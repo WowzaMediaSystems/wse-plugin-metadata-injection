@@ -3,12 +3,16 @@ package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.logging.WMSLoggerFactory;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class AMFToID3ConverterStreamController
 {
 	private boolean dataConversionEnabled = false;
 	private int maxVerboseConversionMessages = 5;
 	private int maxFailedConversionMessages = 5;
-	private AMFToID3LiveStreamPacketizerDataHandler dataHandler2;
+	// One stream may be packetized by both the Cupertino (HLS/TS) and CMAF packetizers at the same time
+	private final List<IAMFToID3DataHandler> dataHandlers = new CopyOnWriteArrayList<>();
 	private boolean enableDataConversion = true;
 
 	public AMFToID3ConverterStreamController(IApplicationInstance appInstance, String streamName)
@@ -30,17 +34,45 @@ public class AMFToID3ConverterStreamController
 
 	}
 
+	/**
+	 * @deprecated use {@link #addDataHandler(IAMFToID3DataHandler)}
+	 */
+	@Deprecated
 	public void setDataHandler(AMFToID3LiveStreamPacketizerDataHandler amfToID3LiveStreamPacketizerDataHandler)
 	{
-		this.dataHandler2 = amfToID3LiveStreamPacketizerDataHandler;
+		addDataHandler(amfToID3LiveStreamPacketizerDataHandler);
+	}
+
+	public void addDataHandler(IAMFToID3DataHandler dataHandler)
+	{
+		if (dataHandler == null)
+			return;
+
+		if (!dataHandlers.contains(dataHandler))
+			dataHandlers.add(dataHandler);
+
+		dataHandler.setMaxFailedConversionMessages(maxFailedConversionMessages);
+		dataHandler.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 
 		if (enableDataConversion)
 			enableDataConversion();
-		if (dataHandler2 != null)
-		{
-			this.dataHandler2.setMaxFailedConversionMessages(maxFailedConversionMessages);
-			this.dataHandler2.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
-		}
+
+		// Sync the new handler with the current state (enableDataConversion() is a no-op if already enabled)
+		dataHandler.setEnabled(dataConversionEnabled);
+	}
+
+	public void removeDataHandler(IAMFToID3DataHandler dataHandler)
+	{
+		if (dataHandler == null)
+			return;
+
+		dataHandlers.remove(dataHandler);
+		dataHandler.setEnabled(false);
+	}
+
+	public boolean hasDataHandlers()
+	{
+		return !dataHandlers.isEmpty();
 	}
 
 	public void enableDataConversion()
@@ -49,8 +81,8 @@ public class AMFToID3ConverterStreamController
 		{
 			this.dataConversionEnabled = true;
 
-			if (this.dataHandler2 != null)
-				this.dataHandler2.setEnabled(true);
+			for (IAMFToID3DataHandler dataHandler : dataHandlers)
+				dataHandler.setEnabled(true);
 		}
 	}
 
@@ -61,8 +93,8 @@ public class AMFToID3ConverterStreamController
 
 		if (this.dataConversionEnabled)
 		{
-			if (this.dataHandler2 != null)
-				this.dataHandler2.setEnabled(false);
+			for (IAMFToID3DataHandler dataHandler : dataHandlers)
+				dataHandler.setEnabled(false);
 
 			this.dataConversionEnabled = false;
 		}

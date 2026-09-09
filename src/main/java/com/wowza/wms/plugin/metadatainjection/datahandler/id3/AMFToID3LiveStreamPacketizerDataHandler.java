@@ -9,7 +9,7 @@ import com.wowza.wms.media.mp3.model.idtags.*;
 
 import com.wowza.wms.plugin.metadatainjection.datahandler.*;
 
-public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler
+public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerMultiDataHandler, IAMFToID3DataHandler
 {
 	private IApplicationInstance appInstance;
 	private LiveStreamPacketizerCupertino packetizer;
@@ -35,7 +35,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 		AMFToID3ConverterStreamController controller = appsManager.getController(appInstance, streamName);
 		if (controller == null)
 			controller = appsManager.createController(appInstance, streamName);
-		controller.setDataHandler(this);
+		controller.addDataHandler(this);
 
 		context = new AMFToID3ConverterContext();
 		context.setContextString(this.packetizer.getContextStr());
@@ -142,6 +142,17 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 		// no-op\
 	}
 
+	/**
+	 * Unregister from the stream controller. Call when the owning packetizer is destroyed.
+	 */
+	public void dispose()
+	{
+		AMFToID3ConverterStreamController controller = AMFToID3ApplicationsManager.getAppsManager().getController(appInstance, streamName);
+		if (controller != null)
+			controller.removeDataHandler(this);
+	}
+
+	@Override
 	public void setEnabled(boolean enabled)
 	{
 		this.enabled = enabled;
@@ -153,6 +164,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 		return enabled;
 	}
 
+	@Override
 	public void setMaxFailedConversionMessages(int maxFailedConversionMessages)
 	{
 		this.maxFailedConversionMessages = maxFailedConversionMessages;
@@ -161,6 +173,7 @@ public class AMFToID3LiveStreamPacketizerDataHandler implements IHTTPStreamerCup
 
 	}
 
+	@Override
 	public void setMaxVerboseConversionMessages(int maxVerboseConversionMessages)
 	{
 		this.maxVerboseConversionMessages = maxVerboseConversionMessages;

@@ -5,11 +5,21 @@ This module provides a REST API to add metadata to a live stream. This is done b
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
 * `ModuleBase`: support for accessing the LiveStreamPacktizers
-* `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access media segments to add AMFData, convert to ID3, and insert Program Date Time
+* `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access HLS/TS media segments to add AMFData, convert to ID3, and insert Program Date Time
+* `IHTTPStreamerMPEGDashLivePacketizerDataHandler` to access CMAF (fMP4) media segments and deliver the same ID3 tags as `emsg` boxes
+
+### Packetizer support
+
+| Packetizer | Output | Delivery |
+| ---------- | ------ | -------- |
+| `cupertinostreamingpacketizer` (HLS/TS) | ID3v2 tags in the transport stream | Per-chunk ID3 header (PDT) and timed ID3 frames (AMF data) |
+| `cmafstreamingpacketizer` (HLS/DASH fMP4) | ID3v2 tags wrapped in `emsg` boxes, scheme `https://aomedia.org/emsg/ID3` | One `emsg` per injected data event (`presentation_time` = packet timecode, timescale 1000) plus one `programDateTime` `emsg` at the start of each segment |
+
+The CMAF `emsg` scheme follows the [ID3 Timed Metadata in CMAF](https://aomediacodec.github.io/id3-emsg/) spec and is recognised by HLS.js, dash.js, Shaka Player and Apple AVPlayer. The `amfToID3ConversionAddToManifest` option (`#EXT-X-METADATA-EVENT-*` chunklist tags) applies to the Cupertino packetizer only.
 
 ## Prerequisites
 
-* Wowza Streaming Engine™ 4.9.4 or later is required
+* Wowza Streaming Engine™ 4.9.4 or later is required (4.8.26 or later for CMAF `emsg` support)
 
 ## Build instructions
 
@@ -97,6 +107,8 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | cupertinoEnableProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS m3u8. Default false. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
 | cupertinoEnableId3ProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags.  Default true.  PDT added to media segment |
 | cupertinoProgramDateTimeOffset | Integer | How much to adjust PDT.  Default 0 |
+| cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). `EXT-X-PROGRAM-DATE-TIME` for CMAF chunklists is controlled by the built-in `cmafEnableProgramDateTime` property. |
+| cmafProgramDateTimeOffset | Integer | How much to adjust the CMAF PDT in milliseconds. Defaults to the value of `cupertinoProgramDateTimeOffset` (0) |
 
 
 ## API
