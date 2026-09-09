@@ -19,7 +19,7 @@ The CMAF `emsg` scheme follows the [ID3 Timed Metadata in CMAF](https://aomediac
 
 ## Prerequisites
 
-* Wowza Streaming Engine™ 4.9.4 or later is required (4.8.26 or later for CMAF `emsg` support)
+* Wowza Streaming Engine™ 4.9.4 or later is required
 
 ## Build instructions
 

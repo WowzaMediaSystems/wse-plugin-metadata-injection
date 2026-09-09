@@ -2,7 +2,6 @@ package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
 
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.logging.WMSLoggerFactory;
-import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,15 +32,6 @@ public class AMFToID3ConverterStreamController
 						"true" :
 						"false"));
 
-	}
-
-	/**
-	 * @deprecated use {@link #addDataHandler(IAMFToID3DataHandler)}
-	 */
-	@Deprecated
-	public void setDataHandler(AMFToID3CupertinoLiveStreamPacketizerDataHandler amfToID3LiveStreamPacketizerDataHandler)
-	{
-		addDataHandler(amfToID3LiveStreamPacketizerDataHandler);
 	}
 
 	public void addDataHandler(IAMFToID3DataHandler dataHandler)
