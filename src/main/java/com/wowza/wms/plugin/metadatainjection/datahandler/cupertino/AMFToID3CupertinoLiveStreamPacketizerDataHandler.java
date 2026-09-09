@@ -14,11 +14,11 @@ import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
 import com.wowza.wms.media.mp3.model.idtags.IID3V2Frame;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3Converter;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterContext;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.IAMFToID3DataHandler;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3Converter;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterContext;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterStreamController;
+import com.wowza.wms.plugin.metadatainjection.amf.IAMFToID3DataHandler;
 
 public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2, IAMFToID3DataHandler
 {

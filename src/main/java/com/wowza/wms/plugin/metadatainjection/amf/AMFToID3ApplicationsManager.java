@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.amf;
 
 import com.wowza.wms.application.*;
 

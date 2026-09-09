@@ -10,12 +10,12 @@ import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPSt
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.metadata.emsg.IEmsgFrame;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3Converter;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterContext;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterStreamController;
+import com.wowza.wms.plugin.metadatainjection.amf.IAMFToID3DataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3Converter;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterContext;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.IAMFToID3DataHandler;
 
 /**
  * Converts injected AMF data events into ID3 frames and delivers them in CMAF segments as

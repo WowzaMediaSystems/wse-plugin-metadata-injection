@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.amf;
 
 /**
  * Common control surface for packetizer data handlers that convert AMF data events to ID3.
