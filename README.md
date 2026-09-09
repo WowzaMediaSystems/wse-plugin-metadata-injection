@@ -110,6 +110,11 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). `EXT-X-PROGRAM-DATE-TIME` for CMAF chunklists is controlled by the built-in `cmafEnableProgramDateTime` property. |
 | cmafProgramDateTimeOffset | Integer | How much to adjust the CMAF PDT in milliseconds. Defaults to the value of `cupertinoProgramDateTimeOffset` (0) |
 
+### Properties (LiveStreamPacketizer):
+| Name                  | Type                                           | Description                                                                      |
+| -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| cmafDataEventsTrackType | String | Built-in WSE property selecting which CMAF track carries `emsg` boxes: `audio` or `video`. WSE defaults to `audio`; this module changes the default to `video` when the property is not set in Application.xml. Set it explicitly under `<Application>/<LiveStreamPacketizer>/<Properties>` to override. |
+
 
 ## API
 ### API patterns is

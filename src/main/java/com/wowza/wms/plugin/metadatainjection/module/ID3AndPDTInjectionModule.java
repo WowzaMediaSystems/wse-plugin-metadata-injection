@@ -2,6 +2,7 @@ package com.wowza.wms.plugin.metadatainjection.module;
 
 import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.application.WMSProperties;
 import com.wowza.wms.httpstreamer.cmafstreaming.livestreampacketizer.LiveStreamPacketizerCmaf;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.CupertinoPacketHolder;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.IHTTPStreamerCupertinoLivePacketizerDataHandler2;
@@ -13,12 +14,12 @@ import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPSt
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.module.ModuleBase;
 import com.wowza.wms.plugin.metadatainjection.ReleaseInfo;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
+import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterStreamController;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.AMFToID3CmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.PDTCmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ApplicationsManager;
-import com.wowza.wms.plugin.metadatainjection.datahandler.id3.AMFToID3ConverterStreamController;
 import com.wowza.wms.stream.livepacketizer.ILiveStreamPacketizer;
 import com.wowza.wms.stream.livepacketizer.LiveStreamPacketizerActionNotifyBase;
 
@@ -37,6 +38,10 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 
 	public static final String PROPNAME_STREAM_NAME = "ID3AndPDTInjectionModule.streamName";
 	public static final String PROPNAME_DATA_HANDLER = "ID3AndPDTInjectionModule.dataHandler";
+
+	// Built-in WSE LiveStreamPacketizer property that selects which CMAF track carries emsg boxes. WSE defaults to "audio".
+	public static final String PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE = "cmafDataEventsTrackType";
+	public static final String DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE = "video";
 
 	private static AMFToID3ApplicationsManager appsManager = AMFToID3ApplicationsManager.getAppsManager();
 	private LiveStreamPacketizerListener listener;
@@ -236,6 +241,15 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 		this.appInstance = appInstance;
 		getLogger().info(
 				"ID3AndPDTInjectionModule.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
+
+		// Default emsg boxes to the video track. Audio-only ID3 events are easy to miss in players that
+		// only surface video-track emsg, and audio may be absent entirely. An explicit
+		// Application.xml LiveStreamPacketizer property still wins.
+		WMSProperties packetizerProps = appInstance.getLiveStreamPacketizerProperties();
+		if (packetizerProps != null && packetizerProps.getProperty(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE) == null)
+			packetizerProps.setProperty(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE);
+		if (packetizerProps != null)
+			getLogger().info("ID3AndPDTInjectionModule.onAppStart[" + appInstance.getContextStr() + "] " + PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE + ":" + packetizerProps.getPropertyStr(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE));
 
 		listener = new LiveStreamPacketizerListener(appInstance);
 		appInstance.addLiveStreamPacketizerListener(listener);
