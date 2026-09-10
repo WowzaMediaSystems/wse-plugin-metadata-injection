@@ -113,7 +113,7 @@ Need to turn on Program Date Time for HLS by adding the following module:
 ### Properties (LiveStreamPacketizer):
 | Name                  | Type                                           | Description                                                                      |
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| cmafDataEventsTrackType | String | Built-in WSE property selecting which CMAF track carries `emsg` boxes: `audio` or `video`. WSE defaults to `audio`; this module changes the default to `video` when the property is not set in Application.xml. Set it explicitly under `<Application>/<LiveStreamPacketizer>/<Properties>` to override. |
+| cmafDataEventsTrackType | String | Built-in WSE property selecting which CMAF track carries `emsg` boxes: `audio` or `video`. WSE defaults to `audio`; this module changes the default to `video` when the property is not set in Application.xml. Set it explicitly under `<Application>/<LiveStreamPacketizer>/<Properties>` to override. audio-only CMAF outputs must set this back to audio |
 
 
 ## API
