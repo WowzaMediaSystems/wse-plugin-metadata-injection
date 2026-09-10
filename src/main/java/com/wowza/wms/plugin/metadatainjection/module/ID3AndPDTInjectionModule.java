@@ -14,8 +14,6 @@ import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPSt
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.module.ModuleBase;
 import com.wowza.wms.plugin.metadatainjection.ReleaseInfo;
-import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
-import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterStreamController;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.AMFToID3CmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.ID3EmsgUtils;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.PDTCmafLiveStreamPacketizerDataHandler;
@@ -44,7 +42,6 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 	public static final String PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE = "cmafDataEventsTrackType";
 	public static final String DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE = "video";
 
-	private static AMFToID3ApplicationsManager appsManager = AMFToID3ApplicationsManager.getAppsManager();
 	private LiveStreamPacketizerListener listener;
 
 	private IApplicationInstance appInstance;
@@ -215,21 +212,14 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 		@Override
 		public void onLiveStreamPacketizerDestroy(ILiveStreamPacketizer liveStreamPacketizer)
 		{
-			String streamName = liveStreamPacketizer.getProperties().getPropertyStr(PROPNAME_STREAM_NAME);
 			Object handler = liveStreamPacketizer.getProperties().getProperty(PROPNAME_DATA_HANDLER);
 
+			// dispose() unregisters the handler atomically and drops the shared controller once no
+			// packetizer (cupertino or cmaf) for this stream references it
 			if (handler instanceof LiveStreamPacketizerDataHandler cupertinoHandler)
 				cupertinoHandler.dispose();
 			else if (handler instanceof CmafLiveStreamPacketizerDataHandler cmafHandler)
 				cmafHandler.dispose();
-
-			// Only drop the controller once no packetizer (cupertino or cmaf) for this stream references it
-			if (streamName != null)
-			{
-				AMFToID3ConverterStreamController controller = appsManager.getController(appInstance, streamName);
-				if (controller == null || !controller.hasDataHandlers())
-					appsManager.removeController(appInstance, streamName);
-			}
 
 			if (liveStreamPacketizer instanceof LiveStreamPacketizerCupertino cupertino)
 				getLogger().info(MODULE_NAME + "#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + cupertino.getContextStr() + "] cupertino");

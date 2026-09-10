@@ -17,7 +17,6 @@ import com.wowza.wms.media.mp3.model.idtags.IID3V2Frame;
 import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
 import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3Converter;
 import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterContext;
-import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterStreamController;
 import com.wowza.wms.plugin.metadatainjection.amf.IAMFToID3DataHandler;
 
 public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2, IAMFToID3DataHandler
@@ -42,12 +41,6 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 		this.packetizer = liveStreamPacketizer;
 		this.streamName = streamName;
 
-		AMFToID3ApplicationsManager appsManager = AMFToID3ApplicationsManager.getAppsManager();
-		AMFToID3ConverterStreamController controller = appsManager.getController(appInstance, streamName);
-		if (controller == null)
-			controller = appsManager.createController(appInstance, streamName);
-		controller.addDataHandler(this);
-
 		context = new AMFToID3ConverterContext();
 		context.setContextString(this.packetizer.getContextStr());
 
@@ -62,6 +55,8 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 		// We have controller, but need to set the packetizer
 		packetizer.getProperties().setProperty("ID3AndPDTInjectionModule.streamName", streamName);
 
+		// Atomic: creates the controller if needed and attaches this handler in one step
+		AMFToID3ApplicationsManager.getAppsManager().registerDataHandler(appInstance, streamName, this);
 	}
 
 	@Override
@@ -155,12 +150,11 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 
 	/**
 	 * Unregister from the stream controller. Call when the owning packetizer is destroyed.
+	 * The controller itself is dropped once no handler references it.
 	 */
 	public void dispose()
 	{
-		AMFToID3ConverterStreamController controller = AMFToID3ApplicationsManager.getAppsManager().getController(appInstance, streamName);
-		if (controller != null)
-			controller.removeDataHandler(this);
+		AMFToID3ApplicationsManager.getAppsManager().unregisterDataHandler(appInstance, streamName, this);
 	}
 
 	@Override

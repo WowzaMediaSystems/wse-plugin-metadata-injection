@@ -6,35 +6,40 @@ import com.wowza.wms.logging.WMSLoggerFactory;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Per-stream on/off switch for AMF to ID3 conversion, fanned out to every packetizer data handler
+ * attached to the stream.
+ * <p>
+ * Handlers are attached from packetizer create callbacks and toggled from the REST API, which
+ * run on different threads. All state transitions are serialized on this instance so a handler
+ * added mid-toggle always ends up in the same state as its siblings.
+ */
 public class AMFToID3ConverterStreamController
 {
-	private boolean dataConversionEnabled = false;
-	private int maxVerboseConversionMessages = 5;
-	private int maxFailedConversionMessages = 5;
+	private volatile boolean dataConversionEnabled = false;
+	private final int maxVerboseConversionMessages;
+	private final int maxFailedConversionMessages;
 	// One stream may be packetized by both the Cupertino (HLS/TS) and CMAF packetizers at the same time
 	private final List<IAMFToID3DataHandler> dataHandlers = new CopyOnWriteArrayList<>();
-	private boolean enableDataConversion = true;
+	// Initial state from the amfToID3ConversionEnabled application property
+	private final boolean enabledByProperty;
 
 	public AMFToID3ConverterStreamController(IApplicationInstance appInstance, String streamName)
 	{
 		// Properties
-		maxVerboseConversionMessages = appInstance.getProperties()
-				.getPropertyInt("amfToID3ConversionVerboseMaximum", maxVerboseConversionMessages);
+		maxVerboseConversionMessages = appInstance.getProperties().getPropertyInt("amfToID3ConversionVerboseMaximum", 5);
 		WMSLoggerFactory.getLogger(AMFToID3ConverterStreamController.class)
 				.info("AMFToID3ConverterStreamController property amfToID3ConversionVerboseMaximum:" + maxVerboseConversionMessages);
-		maxFailedConversionMessages = appInstance.getProperties()
-				.getPropertyInt("amfToID3ConversionFailedMaximum", maxFailedConversionMessages);
+		maxFailedConversionMessages = appInstance.getProperties().getPropertyInt("amfToID3ConversionFailedMaximum", 5);
 		WMSLoggerFactory.getLogger(AMFToID3ConverterStreamController.class)
 				.info("AMFToID3ConverterStreamController property amfToID3ConversionFailedMaximum:" + maxFailedConversionMessages);
-		enableDataConversion = appInstance.getProperties().getPropertyBoolean("amfToID3ConversionEnabled", false);
+		enabledByProperty = appInstance.getProperties().getPropertyBoolean("amfToID3ConversionEnabled", false);
 		WMSLoggerFactory.getLogger(AMFToID3ConverterStreamController.class)
-				.info("AMFToID3ConverterStreamController property amfToID3ConversionEnabled:" + (enableDataConversion ?
-						"true" :
-						"false"));
+				.info("AMFToID3ConverterStreamController property amfToID3ConversionEnabled:" + (enabledByProperty ? "true" : "false"));
 
 	}
 
-	public void addDataHandler(IAMFToID3DataHandler dataHandler)
+	public synchronized void addDataHandler(IAMFToID3DataHandler dataHandler)
 	{
 		if (dataHandler == null)
 			return;
@@ -45,14 +50,14 @@ public class AMFToID3ConverterStreamController
 		dataHandler.setMaxFailedConversionMessages(maxFailedConversionMessages);
 		dataHandler.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 
-		if (enableDataConversion)
+		if (enabledByProperty)
 			enableDataConversion();
 
 		// Sync the new handler with the current state (enableDataConversion() is a no-op if already enabled)
 		dataHandler.setEnabled(dataConversionEnabled);
 	}
 
-	public void removeDataHandler(IAMFToID3DataHandler dataHandler)
+	public synchronized void removeDataHandler(IAMFToID3DataHandler dataHandler)
 	{
 		if (dataHandler == null)
 			return;
@@ -66,7 +71,12 @@ public class AMFToID3ConverterStreamController
 		return !dataHandlers.isEmpty();
 	}
 
-	public void enableDataConversion()
+	public boolean isDataConversionEnabled()
+	{
+		return dataConversionEnabled;
+	}
+
+	public synchronized void enableDataConversion()
 	{
 		if (!this.dataConversionEnabled)
 		{
@@ -77,7 +87,7 @@ public class AMFToID3ConverterStreamController
 		}
 	}
 
-	public void disableDataConversion()
+	public synchronized void disableDataConversion()
 	{
 		WMSLoggerFactory.getLogger(AMFToID3ConverterStreamController.class)
 				.info("AMFToID3ConverterStreamController.disableDataConversion");
