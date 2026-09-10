@@ -96,7 +96,7 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
 | metadataApiKey             | String   | Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key`  Overrides property in vhost.xml if exists|
 | amfToID3ConversionEnabled | Boolean | convert AMF data to ID3 data.  Default true |
-| amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-OBJECT-DETECTION` with guid of event. Default false |
+| amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-*` with guid of event. Default false |
 | amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 
 | amfToID3ConversionFailedMaximum | Integer | How many failed log messages to log. Default 5
 
@@ -104,7 +104,7 @@ Need to turn on Program Date Time for HLS by adding the following module:
 ### Properties (HTTPStreamer):
 | Name                  | Type                                           | Description                                                                      |
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| cupertinoEnableProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS m3u8. Default false. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
+| cupertinoEnableProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS m3u8 (CMAF also). Default false. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
 | cupertinoEnableId3ProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags.  Default true.  PDT added to media segment |
 | cupertinoProgramDateTimeOffset | Integer | How much to adjust PDT.  Default 0 |
 | cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). `EXT-X-PROGRAM-DATE-TIME` for CMAF chunklists is controlled by the built-in `cmafEnableProgramDateTime` property. |
