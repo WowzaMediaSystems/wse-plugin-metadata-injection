@@ -85,7 +85,8 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 			if (buffer[0] == 0)
 				offset++;
 
-			AMFDataList amfList = new AMFDataList(buffer, offset, buffer.length - offset);
+			// getSize() is the payload length; the backing array may be larger than the payload
+			AMFDataList amfList = new AMFDataList(buffer, offset, packet.getSize() - offset);
 
 			context.setContextString(this.packetizer.getContextStr());
 
