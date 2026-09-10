@@ -95,7 +95,7 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | Name                  | Type                                           | Description                                                                      |
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
 | metadataApiKey             | String   | Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key`  Overrides property in vhost.xml if exists|
-| amfToID3ConversionEnabled | Boolean | convert AMF data to ID3 data.  Default true |
+| amfToID3ConversionEnabled | Boolean | convert AMF data to ID3 data.  Default false |
 | amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-*` with guid of event. Default false |
 | amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 
 | amfToID3ConversionFailedMaximum | Integer | How many failed log messages to log. Default 5
