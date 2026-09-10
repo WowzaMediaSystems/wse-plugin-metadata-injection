@@ -18,6 +18,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Shaka and Apple players recognise.
  *
  * See https://aomediacodec.github.io/id3-emsg/
+ * <p>
+ * Players such as dash.js de-duplicate emsg boxes on (scheme_id_uri, value, id), so every emsg
+ * emitted under this scheme for a given packetizer must carry a unique id. Share a single
+ * instance between all handlers attached to the same packetizer so they draw from one counter.
  */
 public class ID3EmsgUtils
 {

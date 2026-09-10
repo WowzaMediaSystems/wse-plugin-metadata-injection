@@ -37,7 +37,10 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 
 	private volatile boolean enabled = false;
 
-	public AMFToID3CmafLiveStreamPacketizerDataHandler(IApplicationInstance appInstance, LiveStreamPacketizerCmaf liveStreamPacketizer, String streamName)
+	/**
+	 * @param emsgUtils emsg helper shared with every other handler on this packetizer so emsg ids stay unique
+	 */
+	public AMFToID3CmafLiveStreamPacketizerDataHandler(IApplicationInstance appInstance, LiveStreamPacketizerCmaf liveStreamPacketizer, String streamName, ID3EmsgUtils emsgUtils)
 	{
 		this.appInstance = appInstance;
 		this.packetizer = liveStreamPacketizer;
@@ -51,7 +54,7 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 		converter.setMaxFailedConversionMessages(maxFailedConversionMessages);
 		converter.setContextStr(liveStreamPacketizer.getContextStr());
 
-		this.emsgUtils = new ID3EmsgUtils(this.packetizer.getContextStr());
+		this.emsgUtils = emsgUtils;
 
 		// We have controller, but need to set the packetizer
 		packetizer.getProperties().setProperty("ID3AndPDTInjectionModule.streamName", streamName);

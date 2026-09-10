@@ -17,6 +17,7 @@ import com.wowza.wms.plugin.metadatainjection.ReleaseInfo;
 import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
 import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterStreamController;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.AMFToID3CmafLiveStreamPacketizerDataHandler;
+import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.ID3EmsgUtils;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.PDTCmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
@@ -130,8 +131,12 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 
 		public CmafLiveStreamPacketizerDataHandler(LiveStreamPacketizerCmaf packetizer, String streamName)
 		{
-			pdt = new PDTCmafLiveStreamPacketizerDataHandler(appInstance, packetizer, streamName);
-			amfToID3 = new AMFToID3CmafLiveStreamPacketizerDataHandler(appInstance, packetizer, streamName);
+			// One emsg id counter per packetizer: PDT and AMF events share the same scheme/value, and
+			// players de-duplicate on (scheme, value, id), so the handlers must not each start at 0.
+			ID3EmsgUtils emsgUtils = new ID3EmsgUtils(packetizer.getContextStr());
+
+			pdt = new PDTCmafLiveStreamPacketizerDataHandler(appInstance, packetizer, streamName, emsgUtils);
+			amfToID3 = new AMFToID3CmafLiveStreamPacketizerDataHandler(appInstance, packetizer, streamName, emsgUtils);
 		}
 
 		public void dispose()

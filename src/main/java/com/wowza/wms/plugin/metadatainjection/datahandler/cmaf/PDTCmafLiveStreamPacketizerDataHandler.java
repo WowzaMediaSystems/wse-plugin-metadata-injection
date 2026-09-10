@@ -45,12 +45,15 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 	// Timecode of the first segment seen; segment start times are relative to it
 	private long baseTimecode = Long.MIN_VALUE;
 
-	public PDTCmafLiveStreamPacketizerDataHandler(IApplicationInstance appInstance, LiveStreamPacketizerCmaf liveStreamPacketizer, String streamName)
+	/**
+	 * @param emsgUtils emsg helper shared with every other handler on this packetizer so emsg ids stay unique
+	 */
+	public PDTCmafLiveStreamPacketizerDataHandler(IApplicationInstance appInstance, LiveStreamPacketizerCmaf liveStreamPacketizer, String streamName, ID3EmsgUtils emsgUtils)
 	{
 		this.appInstance = appInstance;
 		this.streamName = streamName;
 		this.packetizer = liveStreamPacketizer;
-		this.emsgUtils = new ID3EmsgUtils(liveStreamPacketizer.getContextStr());
+		this.emsgUtils = emsgUtils;
 
 		WMSProperties httpProps = appInstance.getHTTPStreamerProperties();
 		WMSProperties props = appInstance.getProperties();
