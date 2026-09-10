@@ -9,7 +9,6 @@ import com.wowza.wms.media.metadata.emsg.IEmsgFrame;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -32,7 +31,6 @@ public class ID3EmsgUtils
 	public static final int ID3_EMSG_DURATION = 0;
 
 	private final String contextStr;
-	private final AtomicBoolean eventStreamRegistered = new AtomicBoolean(false);
 	private final AtomicInteger nextId = new AtomicInteger(0);
 
 	public ID3EmsgUtils(String contextStr)
@@ -41,15 +39,19 @@ public class ID3EmsgUtils
 	}
 
 	/**
-	 * Register the ID3 inband event stream once so the packetizer advertises it
+	 * Register the ID3 inband event stream on the given set so the packetizer advertises it
 	 * (e.g. an InbandEventStream element in a DASH MPD).
+	 * <p>
+	 * A CMAF packetizer owns one {@link InbandEventStreams} per writer handler (audio-only,
+	 * video-only, separate tracks), so this must be evaluated for every set passed in rather than
+	 * once per packetizer. The registered-check makes repeated calls on the same set a no-op.
 	 */
 	public void registerEventStream(InbandEventStreams inbandEventStreams)
 	{
 		if (inbandEventStreams == null)
 			return;
 
-		if (!eventStreamRegistered.getAndSet(true) && inbandEventStreams.getRegisteredEventStream(ID3_EMSG_SCHEME_URI) == null)
+		if (inbandEventStreams.getRegisteredEventStream(ID3_EMSG_SCHEME_URI) == null)
 			inbandEventStreams.registerEventStream(new InbandEventStream(ID3_EMSG_SCHEME_URI, ID3_EMSG_SCHEME_VALUE));
 	}
 
