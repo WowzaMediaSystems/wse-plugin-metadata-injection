@@ -26,7 +26,7 @@ import com.wowza.wms.stream.IMediaStream;
  * {@link PDTCupertinoLiveStreamPacketizerDataHandler} for HLS/TS chunks.
  * <p>
  * EXT-X-PROGRAM-DATE-TIME for CMAF HLS chunklists is handled natively by Wowza Streaming Engine
- * (cmafEnableProgramDateTime), so this handler only emits the ID3/emsg tag.
+ * (cupertinoEnableProgramDateTime), so this handler only emits the ID3/emsg tag.
  */
 public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerDataHandler
 {

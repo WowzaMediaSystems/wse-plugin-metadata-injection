@@ -107,7 +107,7 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | cupertinoEnableProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS m3u8 (CMAF also). Default false. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
 | cupertinoEnableId3ProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags.  Default true.  PDT added to media segment |
 | cupertinoProgramDateTimeOffset | Integer | How much to adjust PDT.  Default 0 |
-| cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). `EXT-X-PROGRAM-DATE-TIME` for CMAF chunklists is controlled by the built-in `cmafEnableProgramDateTime` property. |
+| cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). `EXT-X-PROGRAM-DATE-TIME` for CMAF chunklists is controlled by the built-in `cupertinoEnableProgramDateTime` property. |
 | cmafProgramDateTimeOffset | Integer | How much to adjust the CMAF PDT in milliseconds. Defaults to the value of `cupertinoProgramDateTimeOffset` (0) |
 
 ### Properties (LiveStreamPacketizer):
