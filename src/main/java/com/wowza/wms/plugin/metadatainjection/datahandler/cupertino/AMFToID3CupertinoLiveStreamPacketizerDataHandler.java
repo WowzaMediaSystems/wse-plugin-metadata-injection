@@ -52,9 +52,6 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 
 		addToManifest = appInstance.getProperties().getPropertyBoolean("amfToID3ConversionAddToManifest", false);
 
-		// We have controller, but need to set the packetizer
-		packetizer.getProperties().setProperty("ID3AndPDTInjectionModule.streamName", streamName);
-
 		// Atomic: creates the controller if needed and attaches this handler in one step
 		AMFToID3ApplicationsManager.getAppsManager().registerDataHandler(appInstance, streamName, this);
 	}

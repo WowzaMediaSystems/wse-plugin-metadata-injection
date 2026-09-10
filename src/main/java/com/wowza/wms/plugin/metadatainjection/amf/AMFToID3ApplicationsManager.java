@@ -54,32 +54,14 @@ public class AMFToID3ApplicationsManager
 		});
 	}
 
-	public AMFToID3ConverterStreamController getController(IApplicationInstance appInstance, String streamName)
-	{
-		IApplication app = appInstance.getApplication();
-		return getController(app.getName(), appInstance.getName(), streamName);
-	}
-
-	public AMFToID3ConverterStreamController getController(String appName, String appInstName, String streamName)
-	{
-		String id = getControllerID(appName, appInstName, streamName);
-
-		return controllerMap.get(id);
-	}
-
 	private String getControllerID(IApplicationInstance appInstance, String streamName)
 	{
 		IApplication app = appInstance.getApplication();
-		return getControllerID(app.getName(), appInstance.getName(), streamName);
-	}
-
-	private String getControllerID(String appName, String appInstName, String streamName)
-	{
+		String appInstName = appInstance.getName();
 		if (appInstName == null)
 			appInstName = IApplicationInstance.DEFAULT_APPINSTANCE_NAME;
 
-		String id = appName + "|" + appInstName + "|" + streamName;
-		return id;
+		return app.getName() + "|" + appInstName + "|" + streamName;
 	}
 
 	// Here for unit testing

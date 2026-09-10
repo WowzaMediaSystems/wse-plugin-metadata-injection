@@ -55,9 +55,6 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 
 		this.emsgUtils = emsgUtils;
 
-		// We have controller, but need to set the packetizer
-		packetizer.getProperties().setProperty("ID3AndPDTInjectionModule.streamName", streamName);
-
 		// Atomic: creates the controller if needed and attaches this handler in one step
 		AMFToID3ApplicationsManager.getAppsManager().registerDataHandler(appInstance, streamName, this);
 	}

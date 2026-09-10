@@ -212,6 +212,26 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 		@Override
 		public void onLiveStreamPacketizerDestroy(ILiveStreamPacketizer liveStreamPacketizer)
 		{
+			String type = null;
+			String contextStr = null;
+			if (liveStreamPacketizer instanceof LiveStreamPacketizerCupertino cupertino)
+			{
+				type = "cupertino";
+				contextStr = cupertino.getContextStr();
+			}
+			else if (liveStreamPacketizer instanceof LiveStreamPacketizerCmaf cmaf)
+			{
+				type = "cmaf";
+				contextStr = cmaf.getContextStr();
+			}
+
+			// Packetizer types we never attached to (mpegdash, dvr, ...) have nothing to clean up
+			if (type == null)
+			{
+				super.onLiveStreamPacketizerDestroy(liveStreamPacketizer);
+				return;
+			}
+
 			Object handler = liveStreamPacketizer.getProperties().getProperty(PROPNAME_DATA_HANDLER);
 
 			// dispose() unregisters the handler atomically and drops the shared controller once no
@@ -220,11 +240,18 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 				cupertinoHandler.dispose();
 			else if (handler instanceof CmafLiveStreamPacketizerDataHandler cmafHandler)
 				cmafHandler.dispose();
+			else
+			{
+				// The handler reference is the only way to release the shared controller. If it is
+				// gone (property overwritten, or the packetizer predates this module's listener) the
+				// controller for this stream stays in the static registry, so make that visible.
+				String streamName = liveStreamPacketizer.getProperties().getPropertyStr(PROPNAME_STREAM_NAME);
+				getLogger().warn(MODULE_NAME + "#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + contextStr + "] " + type
+						+ ": no " + PROPNAME_DATA_HANDLER + " on packetizer (found " + (handler == null ? "null" : handler.getClass().getName())
+						+ ", stream " + streamName + "); AMFToID3 controller for this stream may leak");
+			}
 
-			if (liveStreamPacketizer instanceof LiveStreamPacketizerCupertino cupertino)
-				getLogger().info(MODULE_NAME + "#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + cupertino.getContextStr() + "] cupertino");
-			else if (liveStreamPacketizer instanceof LiveStreamPacketizerCmaf cmaf)
-				getLogger().info(MODULE_NAME + "#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + cmaf.getContextStr() + "] cmaf");
+			getLogger().info(MODULE_NAME + "#LiveStreamPacketizerListener.onLiveStreamPacketizerDestroy[" + contextStr + "] " + type);
 
 			super.onLiveStreamPacketizerDestroy(liveStreamPacketizer);
 		}

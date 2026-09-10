@@ -71,11 +71,6 @@ public class AMFToID3ConverterStreamController
 		return !dataHandlers.isEmpty();
 	}
 
-	public boolean isDataConversionEnabled()
-	{
-		return dataConversionEnabled;
-	}
-
 	public synchronized void enableDataConversion()
 	{
 		if (!this.dataConversionEnabled)
