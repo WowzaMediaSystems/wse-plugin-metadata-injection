@@ -72,21 +72,26 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 	public void onFillChunkDataPacket(LiveStreamPacketizerCupertinoChunk chunk, CupertinoPacketHolder holder, AMFPacket packet,
 			ID3Frames id3Frames)
 	{
-		while (true)
+		try
 		{
 			byte[] buffer = packet.getData();
 			if (buffer == null)
-				break;
+				return;
 
 			if (packet.getSize() <= 2)
-				break;
+				return;
 
 			int offset = 0;
 			if (buffer[0] == 0)
 				offset++;
 
-			// getSize() is the payload length; the backing array may be larger than the payload
-			AMFDataList amfList = new AMFDataList(buffer, offset, packet.getSize() - offset);
+			// getSize() is the payload length and the backing array may be larger, but getSize() is
+			// settable independently of the array, so clamp to the array to stay in bounds.
+			int len = Math.min(packet.getSize(), buffer.length) - offset;
+			if (len <= 0)
+				return;
+
+			AMFDataList amfList = new AMFDataList(buffer, offset, len);
 
 			context.setContextString(this.packetizer.getContextStr());
 
@@ -99,44 +104,46 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 			// https://tools.ietf.org/html/draft-pantos-http-live-streaming-23#section-4.3.2.7
 			// #EXT-DATERANGE:ID="f56c068c-ae1f-478e-9148-12d88a4f4f5b",START-DATE="2021-01-12 12:12",X-EVENT="TESTEVENT1"
 			if (addToManifest)
+				addManifestHeaders(chunk, id3Frames);
+		}
+		catch (Exception e)
+		{
+			WMSLoggerFactory.getLogger(AMFToID3CupertinoLiveStreamPacketizerDataHandler.class)
+					.error("AMFToID3CupertinoLiveStreamPacketizerDataHandler.onFillChunkDataPacket[" + context.getContextString() + "]", e);
+		}
+	}
+
+	private void addManifestHeaders(LiveStreamPacketizerCupertinoChunk chunk, ID3Frames id3Frames)
+	{
+		CupertinoUserManifestHeaders userManifestHeaders = chunk.getUserManifestHeaders();
+		if (userManifestHeaders == null)
+			return;
+
+		ObjectMapper mapper = new ObjectMapper();
+		for (IID3V2Frame id3v2Frame : id3Frames.getFrames())
+		{
+			if (id3v2Frame.getClass() != ID3V2FrameTextInformationUserDefined.class)
+				continue;
+
+			ID3V2FrameTextInformationUserDefined textInfo = (ID3V2FrameTextInformationUserDefined)id3v2Frame;
+			JsonNode obj;
+			try
 			{
-				try
-				{
-					for (IID3V2Frame id3v2Frame : id3Frames.getFrames())
-					{
-						if (id3v2Frame.getClass() == ID3V2FrameTextInformationUserDefined.class)
-						{
-							ID3V2FrameTextInformationUserDefined textInfo = (ID3V2FrameTextInformationUserDefined)id3v2Frame;
-							CupertinoUserManifestHeaders userManifestHeaders = chunk.getUserManifestHeaders();
-							if (userManifestHeaders != null)
-							{
-								// Add custom headers to chunklist body for a given chunk
-								ObjectMapper mapper = new ObjectMapper();
-								JsonNode obj = mapper.readTree(textInfo.getValue());
-								String event = null;
-								String guid = null;
-								if (obj.has("eventType"))
-								{
-									event = obj.get("eventType").asText();
-								}
-								if (obj.has("guid"))
-								{
-									guid = obj.get("guid").asText();
-								}
-								if (guid != null && !guid.isEmpty() && event != null && !event.isEmpty() && !event.equals("programDateTime"))
-								{
-									userManifestHeaders.addHeader("EXT-X-METADATA-EVENT-" + event.toUpperCase(), guid);
-								}
-							}
-						}
-					}
-				}
-				catch (Exception e)
-				{
-					WMSLoggerFactory.getLogger(AMFToID3CupertinoLiveStreamPacketizerDataHandler.class).error(e);
-				}
+				obj = mapper.readTree(textInfo.getValue());
 			}
-			break;
+			catch (Exception e)
+			{
+				// Not every TXXX frame carries JSON (e.g. programDateTime); skip it rather than abort the rest
+				continue;
+			}
+
+			String event = obj.has("eventType") ? obj.get("eventType").asText() : null;
+			String guid = obj.has("guid") ? obj.get("guid").asText() : null;
+			if (guid != null && !guid.isEmpty() && event != null && !event.isEmpty() && !event.equals("programDateTime"))
+			{
+				// Add custom headers to chunklist body for a given chunk
+				userManifestHeaders.addHeader("EXT-X-METADATA-EVENT-" + event.toUpperCase(), guid);
+			}
 		}
 	}
 

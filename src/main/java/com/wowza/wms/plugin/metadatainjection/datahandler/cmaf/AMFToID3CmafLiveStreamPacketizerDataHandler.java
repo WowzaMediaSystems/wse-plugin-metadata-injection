@@ -96,8 +96,13 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 			if (buffer[0] == 0)
 				offset++;
 
-			// getSize() is the payload length; the backing array may be larger than the payload
-			AMFDataList amfList = new AMFDataList(buffer, offset, packet.getSize() - offset);
+			// getSize() is the payload length and the backing array may be larger, but getSize() is
+			// settable independently of the array, so clamp to the array to stay in bounds.
+			int len = Math.min(packet.getSize(), buffer.length) - offset;
+			if (len <= 0)
+				return;
+
+			AMFDataList amfList = new AMFDataList(buffer, offset, len);
 
 			context.setContextString(this.packetizer.getContextStr());
 
