@@ -29,14 +29,14 @@ import com.wowza.wms.stream.livepacketizer.LiveStreamPacketizerActionNotifyBase;
  * <li>CMAF (HLS/DASH fMP4): ID3 tags wrapped in emsg boxes (scheme https://aomedia.org/emsg/ID3).</li>
  * </ul>
  */
-public class ID3AndPDTInjectionModule extends ModuleBase
+public class MetadataInjectionModule extends ModuleBase
 {
-	public static final Class<ID3AndPDTInjectionModule> CLASS = ID3AndPDTInjectionModule.class;
+	public static final Class<MetadataInjectionModule> CLASS = MetadataInjectionModule.class;
 	public static String MODULE_NAME = CLASS.getSimpleName();
 	public static final String MODULE_VERSION = ReleaseInfo.getVersion();
 
-	public static final String PROPNAME_STREAM_NAME = "ID3AndPDTInjectionModule.streamName";
-	public static final String PROPNAME_DATA_HANDLER = "ID3AndPDTInjectionModule.dataHandler";
+	public static final String PROPNAME_STREAM_NAME = "MetadataInjectionModule.streamName";
+	public static final String PROPNAME_DATA_HANDLER = "MetadataInjectionModule.dataHandler";
 
 	// Built-in WSE LiveStreamPacketizer property that selects which CMAF track carries emsg boxes. WSE defaults to "audio".
 	public static final String PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE = "cmafDataEventsTrackType";
@@ -262,7 +262,7 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 	{
 		this.appInstance = appInstance;
 		getLogger().info(
-				"ID3AndPDTInjectionModule.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
+				"MetadataInjectionModule.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
 
 		// Default emsg boxes to the video track. Audio-only ID3 events are easy to miss in players that
 		// only surface video-track emsg, and audio may be absent entirely. An explicit
@@ -271,7 +271,7 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 		if (packetizerProps != null && packetizerProps.getProperty(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE) == null)
 			packetizerProps.setProperty(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE);
 		if (packetizerProps != null)
-			getLogger().info("ID3AndPDTInjectionModule.onAppStart[" + appInstance.getContextStr() + "] " + PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE + ":" + packetizerProps.getPropertyStr(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE));
+			getLogger().info("MetadataInjectionModule.onAppStart[" + appInstance.getContextStr() + "] " + PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE + ":" + packetizerProps.getPropertyStr(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE));
 
 		listener = new LiveStreamPacketizerListener(appInstance);
 		appInstance.addLiveStreamPacketizerListener(listener);
@@ -281,7 +281,7 @@ public class ID3AndPDTInjectionModule extends ModuleBase
 	{
 		appInstance.removeLiveStreamPacketizerListener(listener);
 
-		getLogger().info("ID3AndPDTInjectionModule.onAppStop[" + appInstance.getContextStr() + "]");
+		getLogger().info("MetadataInjectionModule.onAppStop[" + appInstance.getContextStr() + "]");
 
 	}
 

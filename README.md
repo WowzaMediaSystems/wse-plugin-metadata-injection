@@ -83,9 +83,9 @@ Optional
 Need to turn on Program Date Time for HLS by adding the following module:
 ```
 <Module>
-	<Name>ID3AndPDTInjectionModule</Name>
-	<Description>ID3AndPDTInjectionModule</Description>
-	<Class>com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule</Class>
+	<Name>MetadataInjectionModule</Name>
+	<Description>MetadataInjectionModule</Description>
+	<Class>com.wowza.wms.plugin.metadatainjection.module.MetadataInjectionModule</Class>
 </Module>
 ```
 
