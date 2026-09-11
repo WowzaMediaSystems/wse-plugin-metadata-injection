@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.amf;
 
 import com.wowza.wms.amf.AMFDataList;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;

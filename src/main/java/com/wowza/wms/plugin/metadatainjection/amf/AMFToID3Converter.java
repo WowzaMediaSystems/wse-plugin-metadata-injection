@@ -1,10 +1,15 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.amf;
 
-import com.wowza.wms.amf.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import com.wowza.wms.amf.AMFData;
+import com.wowza.wms.amf.AMFDataArray;
+import com.wowza.wms.amf.AMFDataItem;
+import com.wowza.wms.amf.AMFDataList;
+import com.wowza.wms.amf.AMFDataObj;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
-
-import java.util.*;
 
 /** Top level converter that detects "wowza_converter" param, chooses converter and creates ID3 frames
  *
@@ -129,7 +134,7 @@ public class AMFToID3Converter
 		{
 			try
 			{
-				String payloadType = amfList.getString(0);
+//				String payloadType = amfList.getString(0);
 			}
 			catch (Exception e)
 			{
@@ -179,7 +184,7 @@ public class AMFToID3Converter
 
 	public static HashMap<String, Object> AMFObjtoJSON(AMFDataObj amfDataObj)
 	{
-		HashMap<String, Object> retVal = new HashMap<String, Object>();
+		HashMap<String, Object> retVal = new HashMap<>();
 		for (Object key : amfDataObj.getKeys())
 		{
 			AMFData amfData = amfDataObj.get(key.toString());

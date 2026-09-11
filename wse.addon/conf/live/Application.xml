@@ -241,9 +241,9 @@
 				<Class>com.wowza.wms.module.ModuleFLVPlayback</Class>
 			</Module>
 			<Module>
-				<Name>ID3AndPDTInjectionModule</Name>
-				<Description>ID3AndPDTInjectionModule</Description>
-				<Class>com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule</Class>
+				<Name>MetadataInjectionModule</Name>
+				<Description>MetadataInjectionModule</Description>
+				<Class>com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule</Class>
 			</Module>
 		</Modules>
 		<!-- Properties defined here will be added to the IApplication.getProperties() and IApplicationInstance.getProperties() collections -->

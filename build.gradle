@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'com.wowza.wms.plugin.metadatainjection'
-version '1.6.0'
+version '1.7.0'
 
 java {
     toolchain {
@@ -68,7 +68,7 @@ tasks.register('generateReleaseInfo') {
         dir.file("ReleaseInfo.java").asFile.text =
                 """|package $packageDotPath;
                    |public class ReleaseInfo {
-                   |    public static String getProject() { return "${projectName}"; }
+                   |    public static String getProject() { return "wse-plugin-${projectName}"; }
                    |    public static String getVersion() { return "${project.version}"; }
                    |}""".stripMargin()
     }

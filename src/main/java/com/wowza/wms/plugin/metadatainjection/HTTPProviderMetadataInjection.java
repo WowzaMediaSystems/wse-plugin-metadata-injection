@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.httpprovider;
+package com.wowza.wms.plugin.metadatainjection;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.*;
@@ -6,7 +6,6 @@ import com.wowza.wms.amf.*;
 import com.wowza.wms.application.*;
 import com.wowza.wms.http.*;
 import com.wowza.wms.logging.*;
-import com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule;
 import com.wowza.wms.stream.*;
 import com.wowza.wms.vhost.*;
 
@@ -23,8 +22,8 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 	private static final int MAXREPEATDELAY = 5000; //5 seconds
 	private static final String LOGPREFIX = "MetadataInjection:";
 
-	private static HashMap<String,Integer> countVerboseMessages = new HashMap<String, Integer>();
-	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<String,Integer>();
+	private static HashMap<String,Integer> countVerboseMessages = new HashMap<>();
+	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<>();
 	static WMSLogger log = null;
 
 	private static LinkedHashMap<String, ArrayList<Date>> injects = new LinkedHashMap<String, ArrayList<Date>>(MAXGUIDLIST)
@@ -43,7 +42,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 	public void onBind(IVHost vhost, HostPort hostPort)
 	{
-		log.info(LOGPREFIX + "Started v" + ID3AndPDTInjectionModule.MODULE_VERSION + " port:" + hostPort);
+		log.info(LOGPREFIX + "Started v" + MetadataInjectionModule.MODULE_VERSION + " port:" + hostPort);
 		super.onBind(vhost, hostPort);
 	}
 
@@ -78,7 +77,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 							ArrayList<Date> successArray = injects.get(guid);
 							OutputStream out = resp.getOutputStream();
 							String msg = "{}";
-							if (successArray == null || successArray.size() == 0)
+							if (successArray == null || successArray.isEmpty())
 							{
 								msg = "{\"status\":\"waiting\", \"guid\":\"" + guid + "\", \"count\":" + 0 + ", \"inserted_at\":[]}";
 							}
@@ -119,7 +118,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 					try
 					{
 						out.write(new String(
-								"{\"name\":\"" + LOGPREFIX + "\",\"version\":\"" + ID3AndPDTInjectionModule.MODULE_VERSION + "\"}").getBytes());
+								"{\"name\":\"" + LOGPREFIX + "\",\"version\":\"" + MetadataInjectionModule.MODULE_VERSION + "\"}").getBytes());
 					}
 					catch (Exception e)
 					{
