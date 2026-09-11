@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.httpprovider;
+package com.wowza.wms.plugin.metadatainjection;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.*;
@@ -6,7 +6,6 @@ import com.wowza.wms.amf.*;
 import com.wowza.wms.application.*;
 import com.wowza.wms.http.*;
 import com.wowza.wms.logging.*;
-import com.wowza.wms.plugin.metadatainjection.module.MetadataInjectionModule;
 import com.wowza.wms.stream.*;
 import com.wowza.wms.vhost.*;
 

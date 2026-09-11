@@ -1,4 +1,4 @@
-package com.wowza.wms.plugin.metadatainjection.module;
+package com.wowza.wms.plugin.metadatainjection;
 
 import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
