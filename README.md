@@ -49,7 +49,7 @@ add HTTPProvider
 
 ```xml
 <HTTPProvider>
-	<BaseClass>com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetadataInjection</BaseClass>
+	<BaseClass>com.wowza.wms.plugin.metadatainjection.HTTPProviderMetadataInjection</BaseClass>
 	<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
 	<AuthenticationMethod>admin-basic</AuthenticationMethod>
 	<PasswordEncodingScheme>none</PasswordEncodingScheme>
@@ -85,7 +85,7 @@ Need to turn on Program Date Time for HLS by adding the following module:
 <Module>
 	<Name>MetadataInjectionModule</Name>
 	<Description>MetadataInjectionModule</Description>
-	<Class>com.wowza.wms.plugin.metadatainjection.module.MetadataInjectionModule</Class>
+	<Class>com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule</Class>
 </Module>
 ```
 

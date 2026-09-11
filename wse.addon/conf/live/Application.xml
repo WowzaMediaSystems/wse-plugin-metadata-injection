@@ -243,7 +243,7 @@
 			<Module>
 				<Name>MetadataInjectionModule</Name>
 				<Description>MetadataInjectionModule</Description>
-				<Class>com.wowza.wms.plugin.metadatainjection.module.MetadataInjectionModule</Class>
+				<Class>com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule</Class>
 			</Module>
 		</Modules>
 		<!-- Properties defined here will be added to the IApplication.getProperties() and IApplicationInstance.getProperties() collections -->

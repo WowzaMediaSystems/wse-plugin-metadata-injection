@@ -6,7 +6,7 @@ import com.wowza.wms.amf.*;
 import com.wowza.wms.application.*;
 import com.wowza.wms.http.*;
 import com.wowza.wms.logging.*;
-import com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule;
+import com.wowza.wms.plugin.metadatainjection.module.MetadataInjectionModule;
 import com.wowza.wms.stream.*;
 import com.wowza.wms.vhost.*;
 
@@ -43,7 +43,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 	public void onBind(IVHost vhost, HostPort hostPort)
 	{
-		log.info(LOGPREFIX + "Started v" + ID3AndPDTInjectionModule.MODULE_VERSION + " port:" + hostPort);
+		log.info(LOGPREFIX + "Started v" + MetadataInjectionModule.MODULE_VERSION + " port:" + hostPort);
 		super.onBind(vhost, hostPort);
 	}
 
@@ -119,7 +119,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 					try
 					{
 						out.write(new String(
-								"{\"name\":\"" + LOGPREFIX + "\",\"version\":\"" + ID3AndPDTInjectionModule.MODULE_VERSION + "\"}").getBytes());
+								"{\"name\":\"" + LOGPREFIX + "\",\"version\":\"" + MetadataInjectionModule.MODULE_VERSION + "\"}").getBytes());
 					}
 					catch (Exception e)
 					{
