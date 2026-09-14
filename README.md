@@ -104,11 +104,11 @@ Need to turn on Program Date Time for HLS by adding the following module:
 ### Properties (HTTPStreamer):
 | Name                  | Type                                           | Description                                                                      |
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| cupertinoEnableProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS m3u8 (CMAF also). Default false. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
-| cupertinoEnableId3ProgramDateTime             | Boolean   | Turn on HLS Program Date Time.  Needed for ID3 tags.  Default true.  PDT added to media segment |
-| cupertinoProgramDateTimeOffset | Integer | How much to adjust PDT.  Default 0 |
-| cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). `EXT-X-PROGRAM-DATE-TIME` for CMAF chunklists is controlled by the built-in `cupertinoEnableProgramDateTime` property. |
-| cmafProgramDateTimeOffset | Integer | How much to adjust the CMAF PDT in milliseconds. Defaults to the value of `cupertinoProgramDateTimeOffset` (0) |
+| cupertinoEnableProgramDateTime             | Boolean   | Built-in WSE property. Adds `EXT-X-PROGRAM-DATE-TIME` to HLS chunklists (TS and CMAF). Default false. Not required for the ID3 tags below. On WSE versions older than 4.11 this module sets the TS chunk PDT itself when this is enabled. [Wowza Documentation](https://www.wowza.com/docs/how-to-control-display-of-program-date-and-time-headers-in-hls-chunklists-for-live-streams-ext-x-program-date-time) |
+| cupertinoEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag to the ID3 header of each HLS/TS chunk. Default true. The value is the wall clock time the chunk was created and matches the chunk's `EXT-X-PROGRAM-DATE-TIME`; on WSE 4.11+ the server's value is reused as-is. |
+| cupertinoProgramDateTimeOffset | Integer | How much to adjust the HLS/TS PDT in milliseconds. Default 0. Only applied when this module computes the PDT itself (WSE older than 4.11); ignored when the server has already set the chunk PDT. |
+| cmafEnableId3ProgramDateTime             | Boolean   | Add a `programDateTime` ID3 tag (as an `emsg`) at the start of each CMAF segment. Defaults to the value of `cupertinoEnableId3ProgramDateTime` (true). The value is the wall clock time the segment was created, matching how WSE calculates `EXT-X-PROGRAM-DATE-TIME`; on WSE 4.11+ the server's value is reused as-is. |
+| cmafProgramDateTimeOffset | Integer | How much to adjust the CMAF ID3 PDT in milliseconds. Defaults to the value of `cupertinoProgramDateTimeOffset` (0). Only applied when this module computes the time itself; ignored if the packetizer already exposes the segment's native time. |
 
 ### Properties (LiveStreamPacketizer):
 | Name                  | Type                                           | Description                                                                      |
