@@ -29,7 +29,6 @@ public class AMFToID3Converter
 	private int maxFailedConversionMessages = 20;
 	private int countFailedConversionMessages = 0;
 	private int maxVerboseConversionMessages = 20;
-	private String contextStr = "";
 
 	public AMFToID3Converter(IApplicationInstance appInstance)
 	{
@@ -173,16 +172,6 @@ public class AMFToID3Converter
 		this.maxVerboseConversionMessages = maxVerboseConversionMessages;
 		basicStringConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 		basicJSONConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
-	}
-
-	public void setContextStr(String contextStr)
-	{
-		this.contextStr = contextStr;
-	}
-
-	public String getContextStr()
-	{
-		return this.contextStr;
 	}
 
 	public static HashMap<String, Object> AMFObjtoJSON(AMFDataObj amfDataObj)

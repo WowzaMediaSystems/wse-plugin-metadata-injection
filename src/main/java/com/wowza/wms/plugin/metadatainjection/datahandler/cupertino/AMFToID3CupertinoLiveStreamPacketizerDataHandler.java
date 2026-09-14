@@ -48,8 +48,6 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 		converter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 		converter.setMaxFailedConversionMessages(maxFailedConversionMessages);
 
-		converter.setContextStr(liveStreamPacketizer.getContextStr());
-
 		addToManifest = appInstance.getProperties().getPropertyBoolean("amfToID3ConversionAddToManifest", false);
 
 		// Atomic: creates the controller if needed and attaches this handler in one step
