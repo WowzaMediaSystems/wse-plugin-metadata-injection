@@ -19,6 +19,7 @@ public class AMFToID3ConverterStreamController
 {
 	private static final Class<AMFToID3ConverterStreamController> CLASS = AMFToID3ConverterStreamController.class;
 	private static final String CLASS_NAME = CLASS.getSimpleName();	
+	private final WMSLogger logger;
 	private volatile boolean dataConversionEnabled = false;
 	private final int maxVerboseConversionMessages;
 	private final int maxFailedConversionMessages;
@@ -26,7 +27,6 @@ public class AMFToID3ConverterStreamController
 	private final List<IAMFToID3DataHandler> dataHandlers = new CopyOnWriteArrayList<>();
 	// Initial state from the amfToID3ConversionEnabled application property
 	private final boolean enabledByProperty;
-	private final WMSLogger logger;
 
 	public AMFToID3ConverterStreamController(IApplicationInstance appInstance, String streamName)
 	{

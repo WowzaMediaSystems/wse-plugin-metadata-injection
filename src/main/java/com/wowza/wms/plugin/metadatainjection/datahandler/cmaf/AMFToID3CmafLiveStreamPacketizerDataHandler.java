@@ -7,6 +7,7 @@ import com.wowza.wms.httpstreamer.cmafstreaming.livestreampacketizer.LiveStreamP
 import com.wowza.wms.httpstreamer.model.LiveStreamPacketizerPacketHolder;
 import com.wowza.wms.httpstreamer.mpegdashstreaming.file.InbandEventStreams;
 import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPStreamerMPEGDashLivePacketizerDataHandler;
+import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.metadata.emsg.IEmsgFrame;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
@@ -23,7 +24,10 @@ import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3Cupe
  * and application properties.
  */
 public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEGDashLivePacketizerDataHandler, IAMFToID3DataHandler
-{
+{	
+	private static final Class<AMFToID3CmafLiveStreamPacketizerDataHandler> CLASS = AMFToID3CmafLiveStreamPacketizerDataHandler.class;
+	private static final String CLASS_NAME = CLASS.getSimpleName();	
+	private final WMSLogger logger;
 	private final IApplicationInstance appInstance;
 	private final LiveStreamPacketizerCmaf packetizer;
 	private final String streamName;
@@ -44,6 +48,7 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 		this.appInstance = appInstance;
 		this.packetizer = liveStreamPacketizer;
 		this.streamName = streamName;
+		this.logger = WMSLoggerFactory.getLoggerObj(CLASS, appInstance);
 
 		context = new AMFToID3ConverterContext();
 		context.setContextString(this.packetizer.getContextStr());
@@ -116,13 +121,12 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 			IEmsgFrame emsg = emsgUtils.addID3Frames(inbandEventStreams, id3Frames, packet.getAbsTimecode());
 			if (emsg != null)
 			{
-				WMSLoggerFactory.getLogger(AMFToID3CmafLiveStreamPacketizerDataHandler.class)
-						.debug("AMFToID3CmafLiveStreamPacketizerDataHandler[" + context.getContextString() + "] emsg: [id: " + emsg.getId() + ", time: " + emsg.getTime() + "]");
+				logger.debug("AMFToID3CmafLiveStreamPacketizerDataHandler[" + context.getContextString() + "] emsg: [id: " + emsg.getId() + ", time: " + emsg.getTime() + "]");
 			}
 		}
 		catch (Exception e)
 		{
-			WMSLoggerFactory.getLogger(AMFToID3CmafLiveStreamPacketizerDataHandler.class).error("AMFToID3CmafLiveStreamPacketizerDataHandler.onFillSegmentDataPacket[" + context.getContextString() + "]", e);
+			logger.error("AMFToID3CmafLiveStreamPacketizerDataHandler.onFillSegmentDataPacket[" + context.getContextString() + "]", e);
 		}
 	}
 
