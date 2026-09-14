@@ -44,7 +44,7 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 		context = new AMFToID3ConverterContext();
 		context.setContextString(this.packetizer.getContextStr());
 
-		this.converter = new AMFToID3Converter();
+		this.converter = new AMFToID3Converter(appInstance);
 		converter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 		converter.setMaxFailedConversionMessages(maxFailedConversionMessages);
 

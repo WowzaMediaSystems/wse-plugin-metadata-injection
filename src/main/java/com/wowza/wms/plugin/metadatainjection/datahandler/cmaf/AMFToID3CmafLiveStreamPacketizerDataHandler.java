@@ -53,7 +53,7 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 		context = new AMFToID3ConverterContext();
 		context.setContextString(this.packetizer.getContextStr());
 
-		this.converter = new AMFToID3Converter();
+		this.converter = new AMFToID3Converter(appInstance);
 		converter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 		converter.setMaxFailedConversionMessages(maxFailedConversionMessages);
 		converter.setContextStr(liveStreamPacketizer.getContextStr());

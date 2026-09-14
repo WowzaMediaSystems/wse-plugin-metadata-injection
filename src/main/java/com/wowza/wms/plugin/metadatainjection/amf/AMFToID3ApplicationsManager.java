@@ -1,10 +1,10 @@
 package com.wowza.wms.plugin.metadatainjection.amf;
 
-import com.wowza.wms.application.IApplication;
-import com.wowza.wms.application.IApplicationInstance;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import com.wowza.wms.application.IApplication;
+import com.wowza.wms.application.IApplicationInstance;
 
 /**
  * Registry of per-stream {@link AMFToID3ConverterStreamController}s, keyed by application,
