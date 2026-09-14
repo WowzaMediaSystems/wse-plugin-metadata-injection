@@ -5,7 +5,6 @@ import java.util.Locale;
 
 import org.apache.commons.lang.time.FastDateFormat;
 
-import com.wowza.util.ElapsedTimer;
 import com.wowza.util.SystemUtils;
 import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
@@ -18,12 +17,14 @@ import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
-import com.wowza.wms.stream.IMediaStream;
 
 /**
  * Adds a "programDateTime" ID3 TXXX frame, wrapped in an emsg box, at the start of each CMAF
  * segment. This is the CMAF counterpart of the ID3 program-date-time tag written by
  * {@link PDTCupertinoLiveStreamPacketizerDataHandler} for HLS/TS chunks.
+ * <p>
+ * The value is the wall clock time at which the segment is created (plus the configured offset),
+ * which is how Wowza Streaming Engine calculates EXT-X-PROGRAM-DATE-TIME for CMAF segments.
  * <p>
  * EXT-X-PROGRAM-DATE-TIME for CMAF HLS chunklists is handled natively by Wowza Streaming Engine
  * (cupertinoEnableProgramDateTime), so this handler only emits the ID3/emsg tag.
@@ -33,25 +34,18 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 	public static final String MODULE_NAME = "ModuleCmafProgramDateTime";
 	public static final String ID3_DESCRIPTION = "programDateTime";
 
-	private final IApplicationInstance appInstance;
 	private final FastDateFormat id3DateString = FastDateFormat.getInstance(PDTCupertinoLiveStreamPacketizerDataHandler.ID3DATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
 
 	private boolean enableId3ProgramDateTime = true;
 	private long programDateTimeOffset = 0;
-	private final String streamName;
 	private final LiveStreamPacketizerCmaf packetizer;
 	private final ID3EmsgUtils emsgUtils;
-
-	// Timecode of the first segment seen; segment start times are relative to it
-	private long baseTimecode = Long.MIN_VALUE;
 
 	/**
 	 * @param emsgUtils emsg helper shared with every other handler on this packetizer so emsg ids stay unique
 	 */
 	public PDTCmafLiveStreamPacketizerDataHandler(IApplicationInstance appInstance, LiveStreamPacketizerCmaf liveStreamPacketizer, String streamName, ID3EmsgUtils emsgUtils)
 	{
-		this.appInstance = appInstance;
-		this.streamName = streamName;
 		this.packetizer = liveStreamPacketizer;
 		this.emsgUtils = emsgUtils;
 
@@ -81,21 +75,10 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 
 		emsgUtils.registerEventStream(inbandEventStreams);
 
-		IMediaStream stream = appInstance.getStreams().getStream(streamName);
-		if (stream == null)
-			return;
-
-		ElapsedTimer elapsedTime = stream.getElapsedTime();
-		if (elapsedTime == null)
-			return;
-
-		synchronized(this)
-		{
-			if (baseTimecode == Long.MIN_VALUE)
-				baseTimecode = startTimecode;
-		}
-
-		long createTime = elapsedTime.getDate().getTime() + programDateTimeOffset + (startTimecode - baseTimecode);
+		// WSE derives the CMAF EXT-X-PROGRAM-DATE-TIME from the wall clock time the segment is
+		// created (system time of the first packet added to the segment), not from the stream's
+		// elapsed time, so do the same here to keep the ID3 tag consistent with the chunklist.
+		long createTime = System.currentTimeMillis() + programDateTimeOffset;
 
 		ID3Frames id3Frames = new ID3Frames();
 		ID3V2FrameTextInformationUserDefined comment = new ID3V2FrameTextInformationUserDefined();
