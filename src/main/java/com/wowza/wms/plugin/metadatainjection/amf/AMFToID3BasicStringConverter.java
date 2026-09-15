@@ -1,6 +1,8 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.amf;
 
 import com.wowza.wms.amf.*;
+import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.*;
 
@@ -11,12 +13,17 @@ public class AMFToID3BasicStringConverter implements IAMFToID3Converter
 	public static final String ID_WOWZA_CONVERTER = "wowzaConverter";
 	public static final String WOWZA_CONVERTER_TYPE_BASIC_STRING = "basic_string";
 
+	private static final Class<AMFToID3BasicStringConverter> CLASS = AMFToID3BasicStringConverter.class;
+	private static final String CLASS_NAME = CLASS.getSimpleName();
+
+	private final WMSLogger logger;
+
 	private int maxVerboseConversionMessages = 20;
 	private int countVerboseMessages = 0;
 
-	public AMFToID3BasicStringConverter()
+	public AMFToID3BasicStringConverter(IApplicationInstance appInstance)
 	{
-
+		logger = WMSLoggerFactory.getLoggerObj(CLASS, appInstance);
 	}
 
 	public void setMaxVerboseConversionMessages(int maxVerboseConversionMessages)
@@ -54,11 +61,9 @@ public class AMFToID3BasicStringConverter implements IAMFToID3Converter
 			countVerboseMessages++;
 			if (countVerboseMessages < maxVerboseConversionMessages)
 			{
-				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.info("AMFToID3BasicStringConverter[" + context.getContextString() + "]: Converted AMF structure: " + AMFToDebugFormatter.amfToDebug(
+				logger.info(CLASS_NAME + "[" + context.getContextString() + "]: Converted AMF structure: " + AMFToDebugFormatter.amfToDebug(
 								amfList).replace('\n', '|'));
-				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.info("AMFToID3BasicStringConverter[" + context.getContextString() + "]: To ID3 AMF desc:" + payloadType + " value:" + payload.replace(
+				logger.info(CLASS_NAME + "[" + context.getContextString() + "]: To ID3 AMF desc:" + payloadType + " value:" + payload.replace(
 								'\n', '|'));
 			}
 

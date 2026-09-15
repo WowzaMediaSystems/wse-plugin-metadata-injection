@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'com.wowza.wms.plugin.metadatainjection'
-version '1.6.0'
+version '2.0.0'
 
 java {
     toolchain {
@@ -31,8 +31,8 @@ configurations {
 dependencies {
     implementation fileTree(dir: "$wseLibDir", include: '**/*.jar')
 
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
-    implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.5'
+    implementation 'org.apache.logging.log4j:log4j-api:2.25.5'
 }
 
 tasks.withType(Jar).configureEach {
@@ -68,7 +68,7 @@ tasks.register('generateReleaseInfo') {
         dir.file("ReleaseInfo.java").asFile.text =
                 """|package $packageDotPath;
                    |public class ReleaseInfo {
-                   |    public static String getProject() { return "${projectName}"; }
+                   |    public static String getProject() { return "wse-plugin-${projectName}"; }
                    |    public static String getVersion() { return "${project.version}"; }
                    |}""".stripMargin()
     }

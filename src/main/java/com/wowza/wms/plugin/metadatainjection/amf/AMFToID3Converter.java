@@ -1,10 +1,17 @@
-package com.wowza.wms.plugin.metadatainjection.datahandler.id3;
+package com.wowza.wms.plugin.metadatainjection.amf;
 
-import com.wowza.wms.amf.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import com.wowza.wms.amf.AMFData;
+import com.wowza.wms.amf.AMFDataArray;
+import com.wowza.wms.amf.AMFDataItem;
+import com.wowza.wms.amf.AMFDataList;
+import com.wowza.wms.amf.AMFDataObj;
+import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
-
-import java.util.*;
 
 /** Top level converter that detects "wowza_converter" param, chooses converter and creates ID3 frames
  *
@@ -13,22 +20,26 @@ import java.util.*;
  */
 public class AMFToID3Converter
 {
+	private static final Class<AMFToID3Converter> CLASS = AMFToID3Converter.class;
+	private static final String CLASS_NAME = CLASS.getSimpleName();	
+	private final WMSLogger logger;
+
 	private AMFToID3BasicStringConverter basicStringConverter = null;
 	private AMFToID3BasicJSONConverter basicJSONConverter = null;
 	private int maxFailedConversionMessages = 20;
 	private int countFailedConversionMessages = 0;
 	private int maxVerboseConversionMessages = 20;
-	private String contextStr = "";
 
-	public AMFToID3Converter()
+	public AMFToID3Converter(IApplicationInstance appInstance)
 	{
-		// Create all converters here
+		this.logger = WMSLoggerFactory.getLoggerObj(CLASS, appInstance);
 
+		// Create all converters here
 		// "basic_string"
-		basicStringConverter = new AMFToID3BasicStringConverter();
+		basicStringConverter = new AMFToID3BasicStringConverter(appInstance);
 		basicStringConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 
-		basicJSONConverter = new AMFToID3BasicJSONConverter();
+		basicJSONConverter = new AMFToID3BasicJSONConverter(appInstance);
 		basicJSONConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 	}
 
@@ -75,8 +86,7 @@ public class AMFToID3Converter
 					countFailedConversionMessages++;
 					if (countFailedConversionMessages < maxFailedConversionMessages)
 					{
-						WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-								.warn("MetadataInjection:Unable to convert AMF data: No Converter found:" + metaType);
+						logger.warn("MetadataInjection:Unable to convert AMF data: No Converter found:" + metaType);
 					}
 
 				}
@@ -89,11 +99,9 @@ public class AMFToID3Converter
 			countFailedConversionMessages++;
 			if (countFailedConversionMessages < maxFailedConversionMessages)
 			{
-				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.error("MetadataInjection:Exception converting AMF data structure", e);
-				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.warn("MetadataInjection:Failed structure: " + AMFToDebugFormatter.amfToDebug(amfList)
-								.replace('\n', '|'));
+				logger.error("MetadataInjection:Exception converting AMF data structure", e);
+				logger.warn("MetadataInjection:Failed structure: " + AMFToDebugFormatter.amfToDebug(amfList)
+						.replace('\n', '|'));
 			}
 		}
 
@@ -129,7 +137,7 @@ public class AMFToID3Converter
 		{
 			try
 			{
-				String payloadType = amfList.getString(0);
+//				String payloadType = amfList.getString(0);
 			}
 			catch (Exception e)
 			{
@@ -147,8 +155,7 @@ public class AMFToID3Converter
 		else
 		{
 
-			WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-					.warn("MetadataInjection:No converter found for ID \"" + converterID + "\"");
+			logger.warn("MetadataInjection:No converter found for ID \"" + converterID + "\"");
 		}
 
 		return null;
@@ -167,19 +174,9 @@ public class AMFToID3Converter
 		basicJSONConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 	}
 
-	public void setContextStr(String contextStr)
-	{
-		this.contextStr = contextStr;
-	}
-
-	public String getContextStr()
-	{
-		return this.contextStr;
-	}
-
 	public static HashMap<String, Object> AMFObjtoJSON(AMFDataObj amfDataObj)
 	{
-		HashMap<String, Object> retVal = new HashMap<String, Object>();
+		HashMap<String, Object> retVal = new HashMap<>();
 		for (Object key : amfDataObj.getKeys())
 		{
 			AMFData amfData = amfDataObj.get(key.toString());
