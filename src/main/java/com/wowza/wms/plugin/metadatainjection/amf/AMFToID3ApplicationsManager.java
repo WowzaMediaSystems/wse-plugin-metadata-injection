@@ -22,6 +22,10 @@ public class AMFToID3ApplicationsManager
 	private static final ConcurrentMap<String, AMFToID3ConverterStreamController> controllerMap = new ConcurrentHashMap<>();
 	private static final AMFToID3ApplicationsManager singleton = new AMFToID3ApplicationsManager();
 
+	private AMFToID3ApplicationsManager()
+	{
+	}
+
 	/**
 	 * Attach a data handler to the controller for this stream, creating the controller if needed.
 	 * Atomic with respect to {@link #unregisterDataHandler}.

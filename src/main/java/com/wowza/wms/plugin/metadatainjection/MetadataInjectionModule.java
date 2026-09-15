@@ -261,8 +261,8 @@ public class MetadataInjectionModule extends ModuleBase
 	public void onAppStart(IApplicationInstance appInstance)
 	{
 		this.appInstance = appInstance;
-		getLogger().info(
-				"MetadataInjectionModule.onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
+		getLogger(CLASS, appInstance).info(
+				MODULE_NAME + ".onAppStart[" + appInstance.getContextStr() + "] MetadataInjection v" + MODULE_VERSION);
 
 		// Default emsg boxes to the video track. Audio-only ID3 events are easy to miss in players that
 		// only surface video-track emsg, and audio may be absent entirely. An explicit
@@ -271,7 +271,7 @@ public class MetadataInjectionModule extends ModuleBase
 		if (packetizerProps != null && packetizerProps.getProperty(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE) == null)
 			packetizerProps.setProperty(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE);
 		if (packetizerProps != null)
-			getLogger().info("MetadataInjectionModule.onAppStart[" + appInstance.getContextStr() + "] " + PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE + ":" + packetizerProps.getPropertyStr(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE));
+			getLogger(CLASS, appInstance).info(MODULE_NAME + ".onAppStart[" + appInstance.getContextStr() + "] " + PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE + ":" + packetizerProps.getPropertyStr(PROPNAME_CMAF_DATA_EVENTS_TRACK_TYPE, DEFAULT_CMAF_DATA_EVENTS_TRACK_TYPE));
 
 		listener = new LiveStreamPacketizerListener(appInstance);
 		appInstance.addLiveStreamPacketizerListener(listener);
@@ -279,10 +279,7 @@ public class MetadataInjectionModule extends ModuleBase
 
 	public void onAppStop(IApplicationInstance appInstance)
 	{
-		appInstance.removeLiveStreamPacketizerListener(listener);
-
-		getLogger().info("MetadataInjectionModule.onAppStop[" + appInstance.getContextStr() + "]");
-
+		getLogger(CLASS, appInstance).info(MODULE_NAME + ".onAppStop[" + appInstance.getContextStr() + "]");
 	}
 
 }

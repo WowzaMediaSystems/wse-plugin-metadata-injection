@@ -10,6 +10,7 @@ import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.Cupert
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.IHTTPStreamerCupertinoLivePacketizerDataHandler2;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertino;
 import com.wowza.wms.httpstreamer.cupertinostreaming.livestreampacketizer.LiveStreamPacketizerCupertinoChunk;
+import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.media.mp3.model.idtags.ID3V2FrameTextInformationUserDefined;
@@ -21,10 +22,12 @@ import com.wowza.wms.plugin.metadatainjection.amf.IAMFToID3DataHandler;
 
 public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPStreamerCupertinoLivePacketizerDataHandler2, IAMFToID3DataHandler
 {
-	private IApplicationInstance appInstance;
-	private LiveStreamPacketizerCupertino packetizer;
-	private String streamName;
-	private boolean addToManifest = false;
+	private static final String CLASS_NAME = "AMFToID3CupertinoLiveStreamPacketizerDataHandler";
+	private final IApplicationInstance appInstance;
+	private final LiveStreamPacketizerCupertino packetizer;
+	private final String streamName;
+	private final boolean addToManifest;
+	private final WMSLogger logger;
 
 	protected AMFToID3Converter converter;
 	private int maxFailedConversionMessages = 20;
@@ -39,6 +42,7 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 	{
 		this.appInstance = appInstance;
 		this.packetizer = liveStreamPacketizer;
+		logger = WMSLoggerFactory.getLoggerObj(AMFToID3CupertinoLiveStreamPacketizerDataHandler.class, appInstance);
 		this.streamName = streamName;
 
 		context = new AMFToID3ConverterContext();
@@ -106,8 +110,7 @@ public class AMFToID3CupertinoLiveStreamPacketizerDataHandler implements IHTTPSt
 		}
 		catch (Exception e)
 		{
-			WMSLoggerFactory.getLogger(AMFToID3CupertinoLiveStreamPacketizerDataHandler.class)
-					.error("AMFToID3CupertinoLiveStreamPacketizerDataHandler.onFillChunkDataPacket[" + context.getContextString() + "]", e);
+			logger.error(CLASS_NAME + ".onFillChunkDataPacket[" + context.getContextString() + "]", e);
 		}
 	}
 

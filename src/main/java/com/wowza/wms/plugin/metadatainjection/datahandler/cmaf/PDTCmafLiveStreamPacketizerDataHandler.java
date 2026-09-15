@@ -3,6 +3,7 @@ package com.wowza.wms.plugin.metadatainjection.datahandler.cmaf;
 import java.util.Date;
 import java.util.Locale;
 
+import com.wowza.wms.logging.WMSLogger;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import com.wowza.util.SystemUtils;
@@ -39,11 +40,12 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 	public static final String ID3_DESCRIPTION = "programDateTime";
 
 	private final FastDateFormat id3DateString = FastDateFormat.getInstance(PDTCupertinoLiveStreamPacketizerDataHandler.ID3DATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
+	private final LiveStreamPacketizerCmaf packetizer;
+	private final ID3EmsgUtils emsgUtils;
+	private final WMSLogger logger;
 
 	private boolean enableId3ProgramDateTime = true;
 	private long programDateTimeOffset = 0;
-	private final LiveStreamPacketizerCmaf packetizer;
-	private final ID3EmsgUtils emsgUtils;
 
 	/**
 	 * @param emsgUtils emsg helper shared with every other handler on this packetizer so emsg ids stay unique
@@ -52,6 +54,7 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 	{
 		this.packetizer = liveStreamPacketizer;
 		this.emsgUtils = emsgUtils;
+		logger = WMSLoggerFactory.getLoggerObj(PDTCmafLiveStreamPacketizerDataHandler.class, appInstance);
 
 		WMSProperties httpProps = appInstance.getHTTPStreamerProperties();
 		WMSProperties props = appInstance.getProperties();
@@ -67,8 +70,7 @@ public class PDTCmafLiveStreamPacketizerDataHandler implements IHTTPStreamerMPEG
 		programDateTimeOffset = httpProps.getPropertyLong("cmafProgramDateTimeOffset", programDateTimeOffset);
 		programDateTimeOffset = props.getPropertyLong("cmafProgramDateTimeOffset", programDateTimeOffset);
 
-		WMSLoggerFactory.getLogger(PDTCmafLiveStreamPacketizerDataHandler.class)
-				.info(MODULE_NAME + "[" + liveStreamPacketizer.getContextStr() + "] Running with cmafEnableId3ProgramDateTime:" + enableId3ProgramDateTime + " cmafProgramDateTimeOffset:" + programDateTimeOffset);
+		logger.info(MODULE_NAME + "[" + liveStreamPacketizer.getContextStr() + "] Running with cmafEnableId3ProgramDateTime:" + enableId3ProgramDateTime + " cmafProgramDateTimeOffset:" + programDateTimeOffset);
 	}
 
 	@Override

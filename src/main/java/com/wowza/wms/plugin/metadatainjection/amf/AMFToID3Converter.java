@@ -36,10 +36,10 @@ public class AMFToID3Converter
 
 		// Create all converters here
 		// "basic_string"
-		basicStringConverter = new AMFToID3BasicStringConverter();
+		basicStringConverter = new AMFToID3BasicStringConverter(appInstance);
 		basicStringConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 
-		basicJSONConverter = new AMFToID3BasicJSONConverter();
+		basicJSONConverter = new AMFToID3BasicJSONConverter(appInstance);
 		basicJSONConverter.setMaxVerboseConversionMessages(maxVerboseConversionMessages);
 	}
 

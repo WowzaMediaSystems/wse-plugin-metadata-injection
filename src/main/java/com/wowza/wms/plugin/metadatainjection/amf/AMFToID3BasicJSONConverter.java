@@ -3,6 +3,8 @@ package com.wowza.wms.plugin.metadatainjection.amf;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wowza.wms.amf.*;
+import com.wowza.wms.application.IApplicationInstance;
+import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.mp3.model.idtags.*;
 
@@ -12,13 +14,16 @@ public class AMFToID3BasicJSONConverter implements IAMFToID3Converter
 {
 
 	public static final String WOWZA_CONVERTER_TYPE_BASIC_JSON = "basic_json";
+	private static final Class<AMFToID3BasicJSONConverter> CLASS = AMFToID3BasicJSONConverter.class;
+	private static final String CLASS_NAME = CLASS.getSimpleName();
 
+	private final WMSLogger logger;
 	private int maxVerboseConversionMessages = 5;
 	private int countVerboseMessages = 0;
 
-	public AMFToID3BasicJSONConverter()
+	public AMFToID3BasicJSONConverter(IApplicationInstance appInstance)
 	{
-
+		logger = WMSLoggerFactory.getLoggerObj(CLASS, appInstance);
 	}
 
 	public void setMaxVerboseConversionMessages(int maxVerboseConversionMessages)
@@ -59,11 +64,9 @@ public class AMFToID3BasicJSONConverter implements IAMFToID3Converter
 			countVerboseMessages++;
 			if (countVerboseMessages < maxVerboseConversionMessages)
 			{
-				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.info("AMFToID3BasicJSONConverter[" + context.getContextString() + "]: Converted AMF structure: " + AMFToDebugFormatter.amfToDebug(
+				logger.info(CLASS_NAME + "[" + context.getContextString() + "]: Converted AMF structure: " + AMFToDebugFormatter.amfToDebug(
 								amfList).replace('\n', '|'));
-				WMSLoggerFactory.getLogger(AMFToID3Converter.class)
-						.info("AMFToID3BasicJSONConverter[" + context.getContextString() + "]: To ID3 AMF desc:" + payloadType + " value:" + payload.replace(
+				logger.info(CLASS_NAME + "[" + context.getContextString() + "]: To ID3 AMF desc:" + payloadType + " value:" + payload.replace(
 								'\n', '|'));
 			}
 

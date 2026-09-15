@@ -16,15 +16,16 @@ import java.util.Map.Entry;
 
 public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 {
+	private static final Class<HTTPProviderMetadataInjection> CLASS = HTTPProviderMetadataInjection.class;
 	private static final int MAXGUIDLIST = 250;    //so we don't eat all the memory with this list if server runs forever
 	private static final int MAXDELAY = 30000; //30 seconds
 	private static final int MAXREPEAT = 10;
 	private static final int MAXREPEATDELAY = 5000; //5 seconds
 	private static final String LOGPREFIX = "MetadataInjection:";
 
-	private static HashMap<String,Integer> countVerboseMessages = new HashMap<>();
-	private static HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<>();
-	static WMSLogger log = null;
+	private final HashMap<String,Integer> countVerboseMessages = new HashMap<>();
+	private final HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<>();
+	private WMSLogger logger = null;
 
 	private static LinkedHashMap<String, ArrayList<Date>> injects = new LinkedHashMap<String, ArrayList<Date>>(MAXGUIDLIST)
 	{
@@ -35,14 +36,10 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		}
 	};
 
-	public HTTPProviderMetadataInjection()
-	{
-		log = WMSLoggerFactory.getLogger(HTTPProviderMetadataInjection.class);
-	}
-
 	public void onBind(IVHost vhost, HostPort hostPort)
 	{
-		log.info(LOGPREFIX + "Started v" + MetadataInjectionModule.MODULE_VERSION + " port:" + hostPort);
+		logger = WMSLoggerFactory.getLoggerObj(CLASS, vhost);
+		logger.info(LOGPREFIX + "Started v" + MetadataInjectionModule.MODULE_VERSION + " port:" + hostPort);
 		super.onBind(vhost, hostPort);
 	}
 
@@ -54,7 +51,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 			resp.setHeader("Content-Type", "application/json");
 			resp.setHeader("Access-Control-Allow-Origin", "*");
 			String body = new String(req.getMsgBytes());
-			// log.info(LOGPREFIX + guid + ": message received:" + req.getRequestURL() + " " + body);
+			// logger.info(LOGPREFIX + guid + ": message received:" + req.getRequestURL() + " " + body);
 			if (!doHTTPAuthentication(vhost, req, resp))
 			{
 				return;
@@ -106,7 +103,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 						}
 						catch (Exception e)
 						{
-							log.error(LOGPREFIX + guid + ": ", e);
+							logger.error(LOGPREFIX + guid + ": ", e);
 						}
 					}
 				}
@@ -122,7 +119,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 					}
 					catch (Exception e)
 					{
-						log.error(LOGPREFIX + guid + ": ", e);
+						logger.error(LOGPREFIX + guid + ": ", e);
 					}
 				}
 				return;
@@ -273,7 +270,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 			//and metadataApiKey is defined, make sure its valid
 			if (!metadataApiKey.equals(req.getHeader("metadata-api-key")))
 			{
-				log.warn(LOGPREFIX + "metadataApiKey defined but not valid from request");
+				logger.warn(LOGPREFIX + "metadataApiKey defined but not valid from request");
 				resp.setResponseCode(401);
 				return false;
 			}
@@ -371,7 +368,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		return app.getAppInstance(appInstanceName);
 	}
 
-	public static boolean injectMetadata(IApplicationInstance appInst, IMediaStream stream, String guid, JsonNode actualObj)
+	public boolean injectMetadata(IApplicationInstance appInst, IMediaStream stream, String guid, JsonNode actualObj)
 	{
 		boolean retVal = false;
 		try
@@ -381,7 +378,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 			JsonNode eventObj = actualObj.get("event");
 			if (eventObj == null)
 			{
-				log.warn(LOGPREFIX + guid + ": payload does not contain event.");
+				logger.warn(LOGPREFIX + guid + ": payload does not contain event.");
 				return retVal;
 			}
 			String event = eventObj.textValue();
@@ -477,7 +474,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 					countVerboseMessages.put(appName,countVerboseMessages.get(appName)+1);
 					if (countVerboseMessages.get(appName) < maxVerboseConversionMessages.get(appName))
 					{
-						log.info(
+						logger.info(
 								LOGPREFIX + guid + ": sending AMF event: " + event + "(" + (i + 1) + " of " + repeatCount + ")");
 					}
 					ArrayList<Date> successArray = injects.get(guid);
@@ -499,12 +496,12 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 			}
 			catch (Exception e)
 			{
-				log.error(LOGPREFIX + guid + ": ", e);
+				logger.error(LOGPREFIX + guid + ": ", e);
 			}
 		}
 		catch (Exception e)
 		{
-			log.error(LOGPREFIX + guid + ": ", e);
+			logger.error(LOGPREFIX + guid + ": ", e);
 		}
 		return retVal;
 	}
@@ -584,7 +581,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 	private void failResponse(IHTTPResponse resp, String guid, String msg, int httpCode)
 	{
-		log.warn(LOGPREFIX + guid + ": " + msg + ".");
+		logger.warn(LOGPREFIX + guid + ": " + msg + ".");
 		String jsonString = " {\"status\":\"failed\", ";
 		if (guid != null)
 		{
@@ -606,7 +603,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		}
 		catch (Exception e)
 		{
-			log.error(LOGPREFIX + " ", e);
+			logger.error(LOGPREFIX + " ", e);
 		}
 	}
 
@@ -627,8 +624,8 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 		public void run()
 		{
-			log.info(LOGPREFIX + guid + ": Starting metadata Inject as thread");
-			boolean ok = HTTPProviderMetadataInjection.injectMetadata(appInst, stream, guid, actualObj);
+			logger.info(LOGPREFIX + guid + ": Starting metadata Inject as thread");
+			boolean ok = injectMetadata(appInst, stream, guid, actualObj);
 			ArrayList<Date> successArray = injects.get(guid);
 			String msg = "";
 			if (ok && successArray != null)
@@ -649,7 +646,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 					}
 				}
 			}
-			log.info(LOGPREFIX + guid + ": Finished metadata Inject as thread. Inserted at:" + msg);
+			logger.info(LOGPREFIX + guid + ": Finished metadata Inject as thread. Inserted at:" + msg);
 		}
 	}
 
