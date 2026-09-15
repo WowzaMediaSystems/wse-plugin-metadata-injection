@@ -33,11 +33,11 @@ public class AMFToID3ConverterStreamController
 		logger = WMSLoggerFactory.getLoggerObj(CLASS, appInstance);
 		// Properties
 		maxVerboseConversionMessages = appInstance.getProperties().getPropertyInt("amfToID3ConversionVerboseMaximum", 5);
-		logger.info("AMFToID3ConverterStreamController property amfToID3ConversionVerboseMaximum:" + maxVerboseConversionMessages);
+		logger.info(CLASS_NAME + " property amfToID3ConversionVerboseMaximum:" + maxVerboseConversionMessages);
 		maxFailedConversionMessages = appInstance.getProperties().getPropertyInt("amfToID3ConversionFailedMaximum", 5);
-		logger.info("AMFToID3ConverterStreamController property amfToID3ConversionFailedMaximum:" + maxFailedConversionMessages);
+		logger.info(CLASS_NAME + " property amfToID3ConversionFailedMaximum:" + maxFailedConversionMessages);
 		enabledByProperty = appInstance.getProperties().getPropertyBoolean("amfToID3ConversionEnabled", false);
-		logger.info("AMFToID3ConverterStreamController property amfToID3ConversionEnabled:" + (enabledByProperty ? "true" : "false"));
+		logger.info(CLASS_NAME + " property amfToID3ConversionEnabled:" + (enabledByProperty ? "true" : "false"));
 	}
 
 	public synchronized void addDataHandler(IAMFToID3DataHandler dataHandler)
@@ -85,7 +85,7 @@ public class AMFToID3ConverterStreamController
 
 	public synchronized void disableDataConversion()
 	{
-		logger.info("AMFToID3ConverterStreamController.disableDataConversion");
+		logger.info(CLASS_NAME + ".disableDataConversion");
 
 		if (this.dataConversionEnabled)
 		{

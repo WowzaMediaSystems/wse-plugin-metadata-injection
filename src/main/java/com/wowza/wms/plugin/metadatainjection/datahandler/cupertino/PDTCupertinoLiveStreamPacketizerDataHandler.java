@@ -3,6 +3,7 @@ package com.wowza.wms.plugin.metadatainjection.datahandler.cupertino;
 import java.util.Date;
 import java.util.Locale;
 
+import com.wowza.wms.logging.WMSLogger;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import com.wowza.util.SystemUtils;
@@ -25,17 +26,19 @@ public class PDTCupertinoLiveStreamPacketizerDataHandler implements IHTTPStreame
 	public static final String EXTDATEFORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'+00:00'";
 	public static final String ID3DATEFORMAT = EXTDATEFORMAT;
 
-	private FastDateFormat extDateString = FastDateFormat.getInstance(EXTDATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
+	private final FastDateFormat extDateString = FastDateFormat.getInstance(EXTDATEFORMAT, SystemUtils.gmtTimeZone, Locale.US);
+	private final LiveStreamPacketizerCupertino packetizer;
+	private final WMSLogger logger;
 
 	private boolean enableProgramDateTime = false;
 	private boolean enableId3ProgramDateTime = true;
 	private long cupertinoProgramDateTimeOffset = 0;
-	private LiveStreamPacketizerCupertino packetizer = null;
 
 	public PDTCupertinoLiveStreamPacketizerDataHandler(IApplicationInstance appInstance,
 			LiveStreamPacketizerCupertino liveStreamPacketizer, String streamName)
 	{
 		this.packetizer = liveStreamPacketizer;
+		logger = WMSLoggerFactory.getLoggerObj(PDTCupertinoLiveStreamPacketizerDataHandler.class, appInstance);
 
 		WMSProperties httpProps = appInstance.getHTTPStreamerProperties();
 		WMSProperties props = appInstance.getProperties();
@@ -47,8 +50,8 @@ public class PDTCupertinoLiveStreamPacketizerDataHandler implements IHTTPStreame
 		cupertinoProgramDateTimeOffset = httpProps.getPropertyLong("cupertinoProgramDateTimeOffset",
 				cupertinoProgramDateTimeOffset);
 		cupertinoProgramDateTimeOffset = props.getPropertyLong("cupertinoProgramDateTimeOffset", cupertinoProgramDateTimeOffset);
-		WMSLoggerFactory.getLogger(PDTCupertinoLiveStreamPacketizerDataHandler.class)
-				.info(MODULE_NAME + "[" + liveStreamPacketizer.getContextStr() + "] Running with cupertinoEnableProgramDateTime:" + enableProgramDateTime + " cupertinoEnableId3ProgramDateTime:" + enableId3ProgramDateTime + " cupertinoProgramDateTimeOffset:" + cupertinoProgramDateTimeOffset);
+
+		logger.info(MODULE_NAME + "[" + liveStreamPacketizer.getContextStr() + "] Running with cupertinoEnableProgramDateTime:" + enableProgramDateTime + " cupertinoEnableId3ProgramDateTime:" + enableId3ProgramDateTime + " cupertinoProgramDateTimeOffset:" + cupertinoProgramDateTimeOffset);
 
 	}
 

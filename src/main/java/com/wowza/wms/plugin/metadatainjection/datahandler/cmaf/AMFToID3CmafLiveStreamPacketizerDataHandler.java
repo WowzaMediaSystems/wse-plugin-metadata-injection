@@ -11,10 +11,7 @@ import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.media.metadata.emsg.IEmsgFrame;
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
-import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ApplicationsManager;
-import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3Converter;
-import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3ConverterContext;
-import com.wowza.wms.plugin.metadatainjection.amf.IAMFToID3DataHandler;
+import com.wowza.wms.plugin.metadatainjection.amf.*;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
 
 /**
@@ -120,12 +117,12 @@ public class AMFToID3CmafLiveStreamPacketizerDataHandler implements IHTTPStreame
 			IEmsgFrame emsg = emsgUtils.addID3Frames(inbandEventStreams, id3Frames, packet.getAbsTimecode());
 			if (emsg != null)
 			{
-				logger.debug("AMFToID3CmafLiveStreamPacketizerDataHandler[" + context.getContextString() + "] emsg: [id: " + emsg.getId() + ", time: " + emsg.getTime() + "]");
+				logger.debug(CLASS_NAME + ".onFillSegmentDataPacket[" + context.getContextString() + "] emsg: [id: " + emsg.getId() + ", time: " + emsg.getTime() + "]");
 			}
 		}
 		catch (Exception e)
 		{
-			logger.error("AMFToID3CmafLiveStreamPacketizerDataHandler.onFillSegmentDataPacket[" + context.getContextString() + "]", e);
+			logger.error(CLASS_NAME + ".onFillSegmentDataPacket[" + context.getContextString() + "]", e);
 		}
 	}
 
