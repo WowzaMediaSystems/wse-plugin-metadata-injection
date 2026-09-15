@@ -88,6 +88,14 @@ Need to turn on Program Date Time for HLS by adding the following module:
 	<Class>com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule</Class>
 </Module>
 ```
+> [!Note]
+> ### Deprecated class names (upgrading from 1.x)
+> Version 2.0.0 moved the module and HTTP provider to the `com.wowza.wms.plugin.metadatainjection` package. The old class names still work but are deprecated and will be removed in a future major release. Update your configuration to the new names:
+> | Deprecated class | Replacement | Config file |
+> | ---------------- | ----------- | ----------- |
+> | `com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule` | `com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule` | `Application.xml` |
+> | `com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetadataInjection` | `com.wowza.wms.plugin.metadatainjection.HTTPProviderMetadataInjection` | `VHost.xml` |
+> The deprecated classes are empty subclasses of their replacements, so behaviour is identical until they are removed.
 
 
 ### Properties:
