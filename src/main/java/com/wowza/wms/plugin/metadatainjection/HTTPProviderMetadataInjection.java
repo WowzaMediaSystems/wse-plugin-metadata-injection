@@ -1,5 +1,7 @@
 package com.wowza.wms.plugin.metadatainjection;
 
+import java.io.IOException;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.*;
 import com.wowza.wms.amf.*;
@@ -13,6 +15,9 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 {
@@ -23,11 +28,11 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 	private static final int MAXREPEATDELAY = 5000; //5 seconds
 	private static final String LOGPREFIX = "MetadataInjection:";
 
-	private final HashMap<String,Integer> countVerboseMessages = new HashMap<>();
-	private final HashMap<String,Integer> maxVerboseConversionMessages = new  HashMap<>();
+	private static final Map<String,Integer> countVerboseMessages = new ConcurrentHashMap<>();
+	private static final Map<String,Integer> maxVerboseConversionMessages = new ConcurrentHashMap<>();
 	private WMSLogger logger = null;
 
-	private static LinkedHashMap<String, ArrayList<Date>> injects = new LinkedHashMap<String, ArrayList<Date>>(MAXGUIDLIST)
+	private static final LinkedHashMap<String, ArrayList<Date>> injects = new LinkedHashMap<String, ArrayList<Date>>(MAXGUIDLIST)
 	{
 		@Override
 		protected boolean removeEldestEntry(Entry<String, ArrayList<Date>> entry)
@@ -36,6 +41,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		}
 	};
 
+	@Override
 	public void onBind(IVHost vhost, HostPort hostPort)
 	{
 		logger = WMSLoggerFactory.getLoggerObj(CLASS, vhost);
@@ -43,6 +49,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		super.onBind(vhost, hostPort);
 	}
 
+	@Override
 	public void onHTTPRequest(IVHost vhost, IHTTPRequest req, IHTTPResponse resp)
 	{
 		String guid = UUID.randomUUID().toString();
@@ -73,7 +80,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 						{
 							ArrayList<Date> successArray = injects.get(guid);
 							OutputStream out = resp.getOutputStream();
-							String msg = "{}";
+							String msg;
 							if (successArray == null || successArray.isEmpty())
 							{
 								msg = "{\"status\":\"waiting\", \"guid\":\"" + guid + "\", \"count\":" + 0 + ", \"inserted_at\":[]}";
@@ -101,7 +108,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 							out.write(msg.getBytes());
 
 						}
-						catch (Exception e)
+						catch (IOException e)
 						{
 							logger.error(LOGPREFIX + guid + ": ", e);
 						}
@@ -117,7 +124,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 						out.write(new String(
 								"{\"name\":\"" + LOGPREFIX + "\",\"version\":\"" + MetadataInjectionModule.MODULE_VERSION + "\"}").getBytes());
 					}
-					catch (Exception e)
+					catch (IOException e)
 					{
 						logger.error(LOGPREFIX + guid + ": ", e);
 					}
@@ -148,7 +155,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 				//getAppNameFromUrl logs the errors and warnings, just return
 				return;
 			}
-			JsonNode actualObj = null;
+			JsonNode actualObj;
 			try
 			{
 				ObjectMapper mapper = new ObjectMapper();
@@ -168,7 +175,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 						400);
 				return;
 			}
-			catch (Exception e)
+			catch (JsonProcessingException e)
 			{
 				failResponse(resp, guid, "invalid json", 400);
 				return;
@@ -187,7 +194,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 				async = asyncObj.booleanValue();
 			}
 
-			injects.put(guid, new ArrayList<Date>());
+			injects.put(guid, new ArrayList<>());
 			if (async)
 			{
 				Thread t1 = new Thread(new InjectMetadataThread(appInst, stream, guid, actualObj), "InjectMetadataThread");
@@ -334,7 +341,6 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 	private IApplicationInstance getAppInstanceFromUrl(IVHost vhost, IHTTPRequest req, IHTTPResponse resp, String guid)
 	{
-		IApplicationInstance appInst = null;
 		String appName = null;
 		String appInstanceName = "_definst_";
 
@@ -368,9 +374,10 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		return app.getAppInstance(appInstanceName);
 	}
 
-	public boolean injectMetadata(IApplicationInstance appInst, IMediaStream stream, String guid, JsonNode actualObj)
+	public static boolean injectMetadata(IApplicationInstance appInst, IMediaStream stream, String guid, JsonNode actualObj)
 	{
 		boolean retVal = false;
+		WMSLogger logger = WMSLoggerFactory.getLoggerObj(CLASS, appInst);
 		try
 		{
 			String appName = appInst.getApplication().getName();
@@ -438,7 +445,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 				for (int i = 0; i < repeatCount; i++)
 				{
-					AMFDataObj amfData = null;
+					AMFDataObj amfData;
 					if (dataObj == null)
 					{
 						amfData = new AMFDataObj();
@@ -494,7 +501,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 				}
 				retVal = true;
 			}
-			catch (Exception e)
+			catch (InterruptedException e)
 			{
 				logger.error(LOGPREFIX + guid + ": ", e);
 			}
@@ -513,7 +520,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		Iterator<Entry<String, JsonNode>> iterator = jsonObj.fields();
 		while (iterator.hasNext())
 		{
-			AMFData item = null;
+			AMFData item;
 			Entry<String, JsonNode> obj = iterator.next();
 			item = jsonValueToAMFDataItem(obj.getValue());
 			if (item != null)
@@ -526,7 +533,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 
 	private static AMFData jsonValueToAMFDataItem(JsonNode jsonValue)
 	{
-		AMFData item = null;
+		AMFData item;
 		if (jsonValue.isObject())
 		{
 			item = jsonObjToAMFDataObj(jsonValue);
@@ -601,7 +608,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		{
 			out.write(msg.getBytes());
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
 			logger.error(LOGPREFIX + " ", e);
 		}
@@ -622,6 +629,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 			this.actualObj = actualObj;
 		}
 
+		@Override
 		public void run()
 		{
 			logger.info(LOGPREFIX + guid + ": Starting metadata Inject as thread");
