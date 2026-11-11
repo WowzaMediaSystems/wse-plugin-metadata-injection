@@ -459,14 +459,11 @@
       const apiBase = window.location.protocol === 'https:' ? `https://${whepUrl.hostname}:${API_SSL_PORT}` : `http://${whepUrl.hostname}:1935`;
       const apiUrl = `${apiBase}/v1/server/plugin/metaDataInjection/applications/${appName}/streams/${streamName}`;
 
-      const username = window.APP_CONFIG?.ADMIN_USER || '';
-      const password = window.APP_CONFIG?.ADMIN_PASSWORD || '';
-
       const request = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+          'metadata-api-key': window.APP_CONFIG?.METADATA_API_KEY || ''
         },
         body: JSON.stringify({
           event: 'test-event',

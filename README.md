@@ -4,7 +4,7 @@ This module adds metadata to a live stream. Events are sent to a REST API, or by
 
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
-* `ModuleBase`: support for accessing the LiveStreamPacktizers
+* `ModuleBase`: support for accessing the LiveStreamPacketizers
 * `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access HLS/TS media segments to add AMFData, convert to ID3, and insert Program Date Time
 * `IHTTPStreamerMPEGDashLivePacketizerDataHandler` to access CMAF (fMP4) media segments and deliver the same ID3 tags as `emsg` boxes
 * `IMediaStreamLivePacketNotify` and the `onWebRTCDataChannel*` module callbacks to send the same data to WebRTC viewers over a data channel, and to receive events from a WebRTC publisher on a data channel
@@ -118,12 +118,14 @@ docker compose up
    * [WebRTC data channel player](https://wse-trial.wowza.com:8443/metadata-injection/webrtc.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fwhep) plays `https://wse-trial.wowza.com/live/myStream/whep` and shows the same events as they are received on the `metadata` data channel.
    * [WebRTC publisher](https://wse-trial.wowza.com:8443/metadata-injection/publish.html) publishes your camera to `https://wse-trial.wowza.com/live/webrtcStream/whip` and injects events by sending them on the `metadata` data channel. Press **Send Event (Channel)**; the module's reply appears in **Last GUID sent** and the log. To see the event arrive, play `webrtcStream` in one of the players.
 
-3. On either player, press **Send Event (API)**. The GUID the API returns appears in **Last GUID sent** (or the API's error message if the request fails), and the event appears in the **Raw JSON Log** when the player receives it. Over HLS that takes a few segments; over WebRTC it is close to immediate.
+3. On either player, press **Send Event (API)**. The GUID the API returns appears in **Last GUID sent** (or the API's error message if the request fails), and the event appears in the **Raw JSON** log when the player receives it. Over HLS that takes a few segments; over WebRTC it is close to immediate.
 
    * **Event String** sets the `stringTest` value in the event data.
    * **Config** sets the `delay`, `repeat` and `repeatInterval` sent with the event (defaults: 500 ms, 2, 500 ms).
    * A repeated event keeps its GUID, so the second and later copies are marked `[Dup]` in the log.
    * **Clear** empties the log.
+
+Safari note: hls.js stores the ID3 data as properties on each text track cue, and Safari discards them when it garbage-collects a cue nothing else references, so events go missing in blocks. The HLS page keeps a reference to every cue to avoid this (`retainedCues` in [webpage/hls.html](webpage/hls.html)); a player of your own built on hls.js needs the same. It also reads the `id3` text track directly, because Flowplayer's ID3 plugin emits no events in Safari.
 
 The same pages are also served over plain HTTP at [http://wse-trial.wowza.com:8088/metadata-injection/](http://wse-trial.wowza.com:8088/metadata-injection/).
 
@@ -201,10 +203,11 @@ Add the following module to `<Modules>`. It converts the injected AMF data to ID
 
 | Name                  | Type                                           | Description                                                                      |
 | -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| metadataApiKey             | String   | Can set a authorization key/header with Application.xml property.  This will require the api request to have a header `metadata-api-key`  Overrides property in vhost.xml if exists|
+| useMetadataApiKey | Boolean | `VHost.xml` only. Authorize API requests with the `metadata-api-key` header instead of the provider's `<AuthenticationMethod>` (see [Securing the API](#securing-the-api)). Default false |
+| metadataApiKey             | String   | The key an API request must send in the `metadata-api-key` header when `useMetadataApiKey` is true. Set in `VHost.xml`; a value in `Application.xml` overrides it for that application |
 | amfToID3ConversionEnabled | Boolean | convert AMF data to ID3 data.  Default false |
 | amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-*` with guid of event. Default false |
-| amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 
+| amfToID3ConversionVerboseMaximum | Integer | How many verbose log messages to log. Default 5| 
 | amfToID3ConversionFailedMaximum | Integer | How many failed log messages to log. Default 5
 | metadataDataChannelEnabled | Boolean | Send data events to WebRTC viewers over a data channel. Requires WSE 4.12+ and the WebRTC properties below. Default false |
 | metadataDataChannelOutputLabel | String | Label of the data channel opened toward each WebRTC viewer. Default `metadata` |
@@ -234,8 +237,10 @@ Add the following module to `<Modules>`. It converts the injected AMF data to ID
 
 
 ## API
-### API patterns is
-* `v1/server/plugin/metaDataInjection/applications/{appName}/streams/{streamName}`
+### API patterns
+* `POST v1/server/plugin/metaDataInjection/applications/{appName}/streams/{streamName}`: inject an event; answers `201` with the event's GUID
+* `GET v1/server/plugin/metaDataInjection/injections/{guid}`: status of an injection and the times it was inserted
+* `GET v1/server/plugin/metaDataInjection/version`: plugin version
 * authorization: HTTP Basic/Digest credentials or a `metadata-api-key` header, see [Securing the API](#securing-the-api)
 
 ### API supports methods/verbs
@@ -277,6 +282,7 @@ curl -X POST -H "Content-Type: application/json" -H "metadata-api-key:secretkey"
 	http://127.0.0.1/v1/server/plugin/metaDataInjection/applications/live/streams/mystream
 ```
 
+* The demo uses the API key: `useMetadataApiKey` is `true` in [wse.addon/conf/VHost.xml](wse.addon/conf/VHost.xml), and the sample pages send the key from `METADATA_API_KEY` in `docker-compose.yaml`. The two values must match.
 * `metadataApiKey` can also be set in the `<Properties>` of an `Application.xml`, which overrides the `VHost.xml` value for requests to that application.
 * With `useMetadataApiKey` set to `true` and no `metadataApiKey` defined for the VHost or the application, every request is accepted. Always set a key when turning this on.
 * A browser page that calls the API needs the header it sends allowed by CORS: set `optionsCORSHeadersAddMain` in `VHost.xml` to `Access-Control-Allow-Headers:authorization` or `Access-Control-Allow-Headers:metadata-api-key`.
@@ -288,13 +294,13 @@ curl -X POST -H "Content-Type: application/json" -H "metadata-api-key:secretkey"
 #### Properties
 | Property      | Description                                              |
 |:--------------|:---------------------------------------------------------|
-| event       | Name of the data event to be triggeed          |
+| event       | Name of the data event to be triggered          |
 | async   | Return right away from api call (default false)          |
 | delay       | Delay before the injection, in milliseconds (default 0)                |
 | repeat            | How many times to inject data   (default 1) |
 | repeatInterval            | Time between repeated events, in milliseconds (default 0)|
 | injectTime             | Include current time in metadata json object (default false)   |
-|      id3        | Conver to ID3 tag (default false)|
+|      id3        | Convert to ID3 tag (default false)|
 | data| The json object to be sent|
 
 

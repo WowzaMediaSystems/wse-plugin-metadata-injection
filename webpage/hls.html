@@ -975,12 +975,7 @@
       id3Message.data.objectTest.age = 13;
 
 
-      const username = window.APP_CONFIG?.ADMIN_USER || '';
-      const password = window.APP_CONFIG?.ADMIN_PASSWORD || '';
-      const credentials = `${username}:${password}`;
-      const encodedCredentials = btoa(credentials);
-
-      const authHeader = 'Basic ' + encodedCredentials;
+      const apiKey = window.APP_CONFIG?.METADATA_API_KEY || '';
 
       const streamUrl = new URL(elements.playerUrl.value);
       const pathParts = streamUrl.pathname.split("/");
@@ -1005,7 +1000,7 @@
       // Disabled until the API answers (or the last retry gives up) so a double tap cannot send twice
       document.getElementById('sendBtn').disabled = true;
       setLastGuid('Sending Event....', false);
-      postId3TestData(apiUrl, authHeader, id3Message, 1);
+      postId3TestData(apiUrl, apiKey, id3Message, 1);
     }
 
     // The same WSE issue hits the CORS preflight: WSE answers the OPTIONS itself, then never
@@ -1030,7 +1025,7 @@
       return (status + ' ' + detail).trim();
     }
 
-    function postId3TestData(apiUrl, authHeader, id3Message, attempt)
+    function postId3TestData(apiUrl, apiKey, id3Message, attempt)
     {
       $.post({
         url: apiUrl,
@@ -1039,8 +1034,7 @@
         contentType: "application/json",
         timeout: ID3_POST_TIMEOUT_MS,
         headers: {
-            // "metadata-api-key": "secretkey"
-            "Authorization": authHeader,
+            "metadata-api-key": apiKey,
         },
         data: JSON.stringify(id3Message),
         success: function (okdata) {
@@ -1051,7 +1045,7 @@
         error: function (xhr, textStatus, thrownError) {
           if (textStatus === 'timeout' && attempt < ID3_POST_MAX_ATTEMPTS) {
             console.log("ID3 Data send timed out, retrying (attempt " + (attempt + 1) + ")");
-            postId3TestData(apiUrl, authHeader, id3Message, attempt + 1);
+            postId3TestData(apiUrl, apiKey, id3Message, attempt + 1);
             return;
           }
           console.log("ID3 Data failed event:" + xhr.status + "=>" + xhr.responseText, textStatus, thrownError);
