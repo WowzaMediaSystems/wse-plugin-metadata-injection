@@ -72,7 +72,7 @@
       margin-bottom: 10px;
     }
 
-    .intro h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+    .intro h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; display: flex; align-items: center; }
 
     .intro p { margin: 0; color: #555; }
 
@@ -104,6 +104,10 @@
       color: #333;
       font-weight: 500;
     }
+
+    .card h2 { display: flex; align-items: center; }
+
+    .card-icon { height: 28px; width: auto; margin-right: 8px; }
 
     .card p { margin: 0 0 15px; color: #555; flex: 1; }
 
@@ -149,25 +153,25 @@
 
   <div class="content">
     <div class="intro">
-      <h1>Metadata-Injection</h1>
-      <p>Sample players for the metadata injection plugin. Each one plays the live stream, sends a test event to the plugin and shows the event as the player receives it.</p>
+      <h1><img class="card-icon" src="metadata.png" alt="Metadata" title="Metadata">Metadata-Injection</h1>
+      <p>Sample players for the metadata injection plugin. Each one plays the live stream, sends a test JSON event to the plugin and shows the event as the player receives it.</p>
     </div>
 
     <div class="main-grid">
       <div class="card">
-        <h2>HLS / ID3 player</h2>
+        <h2><img class="card-icon" src="apple.png" alt="Apple HLS" title="Apple HLS"><img class="card-icon" src="monitor.png" alt="Player" title="Player">HLS / ID3 player</h2>
         <p>Plays the HLS stream and logs the injected events as they arrive in the stream as timed ID3 tags.</p>
         <a class="btn btn-primary" id="hlsLink" href="hls.html">Open HLS player <i class="fa fa-arrow-right"></i></a>
       </div>
 
       <div class="card">
-        <h2>WebRTC Data Channel player</h2>
+        <h2><img class="card-icon" src="webrtc.png" alt="WebRTC" title="WebRTC"><img class="card-icon" src="monitor.png" alt="Player" title="Player">WebRTC / Data Channel player</h2>
         <p>Plays the stream over WebRTC (WHEP) and logs the same events as they arrive on the <code>metadata</code> data channel. Requires Wowza Streaming Engine 4.12 or later.</p>
         <a class="btn btn-primary" id="webrtcLink" href="webrtc.html">Open WebRTC player <i class="fa fa-arrow-right"></i></a>
       </div>
 
       <div class="card">
-        <h2>WebRTC publisher</h2>
+        <h2><img class="card-icon" src="webrtc.png" alt="WebRTC" title="WebRTC"><img class="card-icon" src="camera.png" alt="Publisher" title="Publisher">WebRTC / publisher</h2>
         <p>Publishes your camera over WebRTC (WHIP) and injects events by sending them on a data channel instead of calling the API. Needs HTTPS for camera access.</p>
         <a class="btn btn-primary" id="publishLink" href="publish.html">Open WebRTC publisher <i class="fa fa-arrow-right"></i></a>
       </div>

@@ -1,13 +1,13 @@
 # Wowza Streaming Engine Metadata Injection Plugin
 
-This module provides a REST API to add metadata to a live stream. This is done by injecting AMFData which can then be converted to ID3 tags.  A GUID is created for each event sent and returned in the HTTP POST request. The same data can also be sent to WebRTC viewers over a [data channel](#webrtc-data-channels).
+This module adds metadata to a live stream. Events are sent to a REST API, or by a WebRTC publisher over a [data channel](#injecting-over-a-data-channel), and are injected into the stream as AMFData, which can then be converted to ID3 tags for HLS and CMAF players. The same data can also be sent to WebRTC viewers over a [data channel](#webrtc-data-channels). A GUID is created for each event and returned to the sender.
 
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
 * `ModuleBase`: support for accessing the LiveStreamPacktizers
 * `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access HLS/TS media segments to add AMFData, convert to ID3, and insert Program Date Time
 * `IHTTPStreamerMPEGDashLivePacketizerDataHandler` to access CMAF (fMP4) media segments and deliver the same ID3 tags as `emsg` boxes
-* `IMediaStreamLivePacketNotify` and the `onWebRTCDataChannel*` module callbacks to send the same data to WebRTC viewers over a data channel
+* `IMediaStreamLivePacketNotify` and the `onWebRTCDataChannel*` module callbacks to send the same data to WebRTC viewers over a data channel, and to receive events from a WebRTC publisher on a data channel
 
 ### Packetizer support
 
@@ -20,7 +20,7 @@ The CMAF `emsg` scheme follows the [ID3 Timed Metadata in CMAF](https://aomediac
 
 ## WebRTC data channels
 
-Added in version 3.0.0. WebRTC playback has no packetizer and no ID3 tags, so the module can send each data event to WebRTC viewers over a data channel instead. Requires Wowza Streaming Engine 4.12 or later; on older versions the setting is ignored with a warning and everything else keeps working.
+Added in version 3.0.0. WebRTC playback has no packetizer and no ID3 tags, so the module can send each data event to WebRTC viewers over a data channel instead. In the other direction, a WebRTC publisher can [inject events over a data channel](#injecting-over-a-data-channel) instead of calling the REST API. Both are set up as described in [Configuration](#configuration). Requires Wowza Streaming Engine 4.12 or later; on older versions the setting is ignored with a warning and everything else keeps working.
 
 * **What is sent:** one string message per data event, identical to the value of the ID3 `TXXX` frame for that event. For `"id3": true` injections that is the JSON `{...data, "eventType": "<event>", "guid": "<guid>"}` (plus `injectTime` when requested). Only events that are converted to ID3 are sent; `programDateTime` tags describe HLS/CMAF segments and are not sent.
 * **When:** as soon as the event reaches the stream. WebRTC latency is sub-second, so the message arrives close to the frames it was injected next to, but it is not tied to a frame.
@@ -31,7 +31,7 @@ Added in version 3.0.0. WebRTC playback has no packetizer and no ID3 tags, so th
 
 ### Injecting over a data channel
 
-With `metadataDataChannelInputLabel` set, the WebRTC publisher of a stream can inject metadata without calling the REST API. The publisher opens a data channel with that label and sends one string message per injection.
+With `metadataDataChannelEnabled` on and `metadataDataChannelInputLabel` set (under `<Application>` / `<Properties>`), the WebRTC publisher of a stream can inject metadata without calling the REST API. The publisher opens a data channel with that label and sends one string message per injection.
 
 * **Message:** the same JSON as the body of an API `POST` (see [Payload](#payload-json)), for example `{"event":"test-event","id3":true,"data":{"stringTest":"hello"}}`. `delay`, `repeat` and `repeatInterval` work as they do in the API; the injection always runs asynchronously.
 * **Result:** the event is added to the publisher's stream as AMF data, so it reaches HLS/CMAF players as ID3 and WebRTC viewers on the output channel, exactly like an API injection.
@@ -76,10 +76,10 @@ and turn the feature on under `<Application>` / `<Properties>`:
 
 `MODULE` mode is required: in the default `BROADCAST` mode WSE does not give modules access to the data channels. `MODULE` mode turns off WSE's own routing, so this module does that routing itself (`metadataDataChannelRelay`, on by default): each label the publisher opens is opened toward every viewer, including viewers who join later, and closed when the publisher closes it; publisher messages go to all viewers and viewer messages go to the publisher. Set `metadataDataChannelRelay` to `false` if another module in the application already routes data channels.
 
-The player in this repository connects with WHEP, which needs the following on top of a WebRTC-enabled application (see `wse.addon/conf` for a working setup):
+The player and publisher in this repository connect with WHEP and WHIP, which need the following on top of a WebRTC-enabled application (see `wse.addon/conf` for a working setup):
 
 * `Application.xml`: `<Enable>true</Enable>` in `<WebRTC>`, and `webrtc` added to `<HTTPStreamers>`
-* `VHost.xml`: a `webrtc` entry in `<HTTPStreamerAdapters>`, and `webrtc` added to the `<HTTPStreamerAdapterIDs>` of an SSL `<HostPort>` (WHEP does not work on a non-SSL port)
+* `VHost.xml`: a `webrtc` entry in `<HTTPStreamerAdapters>`, and `webrtc` added to the `<HTTPStreamerAdapterIDs>` of an SSL `<HostPort>` (WHEP and WHIP do not work on a non-SSL port)
 
 ```xml
 <HTTPStreamerAdapter>
@@ -113,6 +113,22 @@ pc.addEventListener('datachannel', (event) => {
 
 A complete player is in [webpage/webrtc.html](webpage/webrtc.html).
 
+### Publisher
+
+A publisher that injects events opens the input channel itself and sends the JSON on it:
+
+```js
+const channel = pc.createDataChannel('metadata'); // metadataDataChannelInputLabel
+channel.addEventListener('message', (message) => {
+  const reply = JSON.parse(message.data); // { status, guid } or { status, reason }
+});
+// createOffer(), then WHIP: POST the offer to https://[address]/[application]/[stream]/whip
+// once the channel is open:
+channel.send(JSON.stringify({ event: 'test-event', id3: true, data: { stringTest: 'hello' } }));
+```
+
+A complete publisher is in [webpage/publish.html](webpage/publish.html).
+
 ## Prerequisites
 
 * Wowza Streaming Engine™ 4.9.4 or later is required
@@ -135,10 +151,11 @@ After building the module, start Wowza Streaming Engine and Wowza Streaming Engi
 docker compose up
 ```
 
-2. Open the sample pages at [https://wse-trial.wowza.com:8443/metadata-injection/](https://wse-trial.wowza.com:8443/metadata-injection/). `wse-trial.wowza.com` resolves to `127.0.0.1`, and both containers use the Wowza-provided certificate for that name, so the pages load over HTTPS without a browser warning. The landing page links to the two players:
+2. Open the sample pages at [https://wse-trial.wowza.com:8443/metadata-injection/](https://wse-trial.wowza.com:8443/metadata-injection/). `wse-trial.wowza.com` resolves to `127.0.0.1`, and both containers use the Wowza-provided certificate for that name, so the pages load over HTTPS without a browser warning. The landing page links to the two players and the publisher:
 
    * [HLS / ID3 player](https://wse-trial.wowza.com:8443/metadata-injection/hls.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fplaylist.m3u8) plays `https://wse-trial.wowza.com/live/myStream/playlist.m3u8` and shows the ID3 tags as they are received in the stream.
    * [WebRTC data channel player](https://wse-trial.wowza.com:8443/metadata-injection/webrtc.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fwhep) plays `https://wse-trial.wowza.com/live/myStream/whep` and shows the same events as they are received on the `metadata` data channel.
+   * [WebRTC publisher](https://wse-trial.wowza.com:8443/metadata-injection/publish.html) publishes your camera to `https://wse-trial.wowza.com/live/webrtcStream/whip` and injects events by sending them on the `metadata` data channel. Press **Send Event (Channel)**; the module's reply appears in **Last GUID sent** and the log. To see the event arrive, play `webrtcStream` in one of the players.
 
 3. On either player, press **Send Event (API)**. The GUID the API returns appears in **Last GUID sent** (or the API's error message if the request fails), and the event appears in the **Raw JSON Log** when the player receives it. Over HLS that takes a few segments; over WebRTC it is close to immediate.
 
@@ -155,7 +172,7 @@ The same pages are also served over plain HTTP at [http://wse-trial.wowza.com:80
 | ---- | --------- | --- |
 | 8443 | Manager | HTTPS: sample pages and Wowza Streaming Engine Manager. Enabled by `JKS_TRIAL=true` in `docker-compose.yaml`; set `JKS_FILE` and `JKS_PASSWORD` instead to use your own certificate. |
 | 8088 | Manager | HTTP: sample pages and Wowza Streaming Engine Manager |
-| 443 | Engine | HTTPS streaming: HLS playback and WebRTC (WHEP) |
+| 443 | Engine | HTTPS streaming: HLS playback and WebRTC (WHEP playback, WHIP publish) |
 | 8444 | Engine | HTTPS, metadata injection API only. Used by the sample pages when they are loaded over HTTPS. |
 | 1935, 80 | Engine | HTTP streaming and the metadata injection API. Used by the sample pages when they are loaded over HTTP. |
 
@@ -203,7 +220,7 @@ Optional
 
 ```
 ### Application.xml
-Need to turn on Program Date Time for HLS by adding the following module:
+Add the following module to `<Modules>`. It converts the injected AMF data to ID3 tags for HLS and CMAF, adds the `programDateTime` ID3 tags, and handles the WebRTC data channels:
 ```
 <Module>
 	<Name>MetadataInjectionModule</Name>
@@ -273,9 +290,9 @@ Need to turn on Program Date Time for HLS by adding the following module:
 |:--------------|:---------------------------------------------------------|
 | event       | Name of the data event to be triggeed          |
 | async   | Return right away from api call (default false)          |
-| delay       | Delay injection by seconds (default 0)                                 |
+| delay       | Delay before the injection, in milliseconds (default 0)                |
 | repeat            | How many times to inject data   (default 1) |
-| repeatInterval            | Time between repeated events  (default 0)|
+| repeatInterval            | Time between repeated events, in milliseconds (default 0)|
 | injectTime             | Include current time in metadata json object (default false)   |
 |      id3        | Conver to ID3 tag (default false)|
 | data| The json object to be sent|

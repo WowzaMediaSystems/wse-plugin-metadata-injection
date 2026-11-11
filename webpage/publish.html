@@ -43,6 +43,7 @@
     .main-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
     .card { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; min-width: 0; }
     .card h2 { font-size: 18px; margin: 0 0 10px; color: #333; font-weight: 500; }
+    .card-icon { height: 28px; width: auto; margin-right: 8px; vertical-align: middle; }
     .badge { background: #777; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; }
     .badge.ok { background: #5cb85c; }
     .badge.bad { background: #d9534f; }
@@ -88,7 +89,7 @@
     .controls-grid .row-actions { display: flex; gap: 10px; }
     .controls-grid .row-actions .btn { flex: 1; justify-content: center; }
 
-    /* Clear button on the right of the "Raw JSON Log" bar */
+    /* Clear button on the right of the "Raw JSON" bar */
     .btn-clear { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #fff; background: transparent; border: 1px solid #fff; border-radius: 4px; cursor: pointer; }
     .btn-clear:hover, .btn-clear:focus { color: #ff8400; background: #fff; }
 
@@ -110,7 +111,7 @@
       <img class="navbar-logo" src="icon-wse.png" />
       <div class="navbar-text-wrapper">
         <div class="navbar-brand-wse">Wowza Streaming Engine</div>
-        <div class="navbar-brand-mgr">WebRTC Data Channel Test Publisher</div>
+        <div class="navbar-brand-mgr">WebRTC Data Channel Publisher</div>
       </div>
     </a>
   </nav>
@@ -150,7 +151,7 @@
     <div class="main-grid">
       <div class="card">
         <h2>
-          Publish Preview
+          <img class="card-icon" src="webrtc.png" alt="WebRTC" title="WebRTC"><img class="card-icon" src="camera.png" alt="Publisher" title="Publisher">Publish Preview
           <span id="mediaBadge" class="badge">media: idle</span>
         </h2>
         <div class="player">
@@ -160,7 +161,7 @@
 
       <div class="card">
         <h2>
-          Data Channel Replies
+          <img class="card-icon" src="metadata.png" alt="Metadata" title="Metadata">Data Channel Replies
           <span id="channelBadge" class="badge">channel (metadata): closed</span>
         </h2>
         <div class="tab-bar">
@@ -350,6 +351,7 @@
           audio: el.microphone.value ? { deviceId: { exact: el.microphone.value } } : true
         });
         el.video.srcObject = mediaStream;
+        el.video.play().catch(() => {});
         listDevices();
 
         const pc = new RTCPeerConnection();
@@ -370,8 +372,11 @@
         const whipUrl = el.whipUrl.value.trim();
         const response = await fetch(whipUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/sdp' },
-          body: pc.localDescription.sdp
+          // WHIP specifies application/sdp, but that content type makes the browser send a CORS
+          // preflight first, and WSE's preflight response has no Content-Length, which Safari waits
+          // about 2s on. text/plain needs no preflight and WSE accepts the offer either way.
+          headers: { 'Content-Type': 'text/plain' },
+          body: withoutMdnsCandidates(pc.localDescription.sdp)
         });
         if (!response.ok) throw new Error('WHIP request failed: ' + response.status + ' ' + (await response.text()));
 
@@ -387,6 +392,13 @@
       } finally {
         el.publish.disabled = false;
       }
+    }
+
+    // Browsers hide local addresses behind mDNS names (xxxx.local) in the offer. WSE cannot resolve
+    // them and spends seconds trying (about 8s for Safari's six candidates) before it answers. They
+    // are not needed: the engine learns the browser's address from its connectivity checks.
+    function withoutMdnsCandidates(sdp) {
+      return sdp.split('\r\n').filter((line) => !/^a=candidate:.* \S+\.local /i.test(line)).join('\r\n');
     }
 
     // Send every candidate in the offer so no trickle (PATCH) requests are needed

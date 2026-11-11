@@ -233,6 +233,8 @@
       font-weight: 500;
     }
 
+    .card-icon { height: 28px; width: auto; margin-right: 8px; vertical-align: middle; }
+
     .badge {
       background: #ff8400;
       color: #fff;
@@ -499,7 +501,7 @@
     .controls-grid .row-actions { display: flex; gap: 10px; }
     .controls-grid .row-actions .btn { flex: 1; justify-content: center; }
 
-    /* Clear button on the right of the "Raw JSON Log" bar */
+    /* Clear button on the right of the "Raw JSON" bar */
     .btn-clear { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #fff; background: transparent; border: 1px solid #fff; border-radius: 4px; cursor: pointer; }
     .btn-clear:hover, .btn-clear:focus { color: #ff8400; background: #fff; }
 
@@ -522,7 +524,7 @@
       <img class="navbar-logo" src="icon-wse.png" />
       <div class="navbar-text-wrapper">
         <div class="navbar-brand-wse">Wowza Streaming Engine</div>
-        <div class="navbar-brand-mgr">ID3 Test Player</div>
+        <div class="navbar-brand-mgr">HLS ID3 Test Player</div>
       </div>
     </a>
   </nav>
@@ -562,13 +564,13 @@
 
     <div class="main-grid">
       <div class="card">
-        <h2>Video Player</h2>
+        <h2><img class="card-icon" src="apple.png" alt="Apple HLS" title="Apple HLS"><img class="card-icon" src="monitor.png" alt="Player" title="Player">Video Player</h2>
         <div id="playerElement" ></div>
       </div>
 
       <div class="card">
         <h2>
-          Live ID3 Events
+          <img class="card-icon" src="metadata.png" alt="Metadata" title="Metadata">Live ID3 Events
           <span class="badge" id="statusBadge">Ready</span>
         </h2>
 
@@ -576,7 +578,7 @@
 
           <label for="tabRaw" id="labelTabRaw">
             <span class="tab-left">
-              <span class="tab-title active">Raw JSON Log</span>
+              <span class="tab-title active">Raw JSON</span>
             </span>
             <span class="tab-actions">
               <button type="button" class="btn-clear" id="clearLogBtn" onclick="clearLog()" title="Clear the events below">Clear <i class="fa fa-trash"></i></button>
