@@ -31,29 +31,37 @@ public class AMFToID3BasicJSONConverter implements IAMFToID3Converter
 		this.maxVerboseConversionMessages = maxVerboseConversionMessages;
 	}
 
+	@Override
+	public String convertAMFDataListToPayload(AMFDataList amfList)
+	{
+		if (!AMFToID3Converter.hasCorrectStructure(amfList))
+			return null;
+
+		String payload = "{}";
+
+		HashMap<String, Object> j = AMFToID3Converter.AMFObjtoJSON(amfList.getObject(1));
+		j.remove("wowzaConverter");
+		j.put("eventType", amfList.getString(0));
+		try
+		{
+			payload = new ObjectMapper().writeValueAsString(j);
+		}
+		catch (JsonProcessingException e)
+		{
+			e.printStackTrace();
+		}
+		return payload;
+	}
+
 	public void convertAMFDataListToID3(AMFDataList amfList, AMFToID3ConverterContext context, ID3Frames id3Frames)
 	{
 		while (true)
 		{
-			if (!AMFToID3Converter.hasCorrectStructure(amfList))
+			String payload = convertAMFDataListToPayload(amfList);
+			if (payload == null)
 				break;
 
 			String payloadType = amfList.getString(0);
-			String payload = "{}";
-
-			AMFDataObj payloadObj = amfList.getObject(1);
-
-			HashMap<String, Object> j = AMFToID3Converter.AMFObjtoJSON(payloadObj);
-			j.remove("wowzaConverter");
-			j.put("eventType", payloadType);
-			try
-			{
-				payload = new ObjectMapper().writeValueAsString(j);
-			}
-			catch (JsonProcessingException e)
-			{
-				e.printStackTrace();
-			}
 
 			// Create ID3	
 			ID3V2FrameTextInformationUserDefined id3 = new ID3V2FrameTextInformationUserDefined();

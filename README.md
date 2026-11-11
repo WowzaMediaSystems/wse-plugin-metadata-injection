@@ -1,12 +1,13 @@
 # Wowza Streaming Engine Metadata Injection Plugin
 
-This module provides a REST API to add metadata to a live stream. This is done by injecting AMFData which can then be converted to ID3 tags.  A GUID is created for each event sent and returned in the HTTP POST request.
+This module provides a REST API to add metadata to a live stream. This is done by injecting AMFData which can then be converted to ID3 tags.  A GUID is created for each event sent and returned in the HTTP POST request. The same data can also be sent to WebRTC viewers over a [data channel](#webrtc-data-channels).
 
 This module leverages the WSE classes:
 * `HTTPProvider2Base`: support of using a REST API with engine
 * `ModuleBase`: support for accessing the LiveStreamPacktizers
 * `IHTTPStreamerCupertinoLivePacketizerDataHandler2` to access HLS/TS media segments to add AMFData, convert to ID3, and insert Program Date Time
 * `IHTTPStreamerMPEGDashLivePacketizerDataHandler` to access CMAF (fMP4) media segments and deliver the same ID3 tags as `emsg` boxes
+* `IMediaStreamLivePacketNotify` and the `onWebRTCDataChannel*` module callbacks to send the same data to WebRTC viewers over a data channel
 
 ### Packetizer support
 
@@ -17,14 +18,94 @@ This module leverages the WSE classes:
 
 The CMAF `emsg` scheme follows the [ID3 Timed Metadata in CMAF](https://aomediacodec.github.io/id3-emsg/) spec and is recognised by HLS.js, dash.js, Shaka Player and Apple AVPlayer. The `amfToID3ConversionAddToManifest` option (`#EXT-X-METADATA-EVENT-*` chunklist tags) applies to the Cupertino packetizer only.
 
+## WebRTC data channels
+
+WebRTC playback has no packetizer and no ID3 tags, so the module can send each data event to WebRTC viewers over a data channel instead. Requires Wowza Streaming Engine 4.12 or later; on older versions the setting is ignored with a warning and everything else keeps working.
+
+* **What is sent:** one string message per data event, identical to the value of the ID3 `TXXX` frame for that event. For `"id3": true` injections that is the JSON `{...data, "eventType": "<event>", "guid": "<guid>"}` (plus `injectTime` when requested). Only events that are converted to ID3 are sent; `programDateTime` tags describe HLS/CMAF segments and are not sent.
+* **When:** as soon as the event reaches the stream. WebRTC latency is sub-second, so the message arrives close to the frames it was injected next to, but it is not tied to a frame.
+* **Channel:** the module opens a channel labeled `metadata` (`metadataDataChannelLabel`) toward every viewer of the stream. Publishers do not get one. If the player has already opened a channel with that label, that channel is used.
+* **Independent of HLS:** delivery does not depend on `amfToID3ConversionEnabled` or on any packetizer being active.
+* **Size limit:** a message must be smaller than 65,535 bytes. Larger events, and events sent while a viewer's channel is closed or its send buffer is full, are not delivered to that viewer and are not retried. A warning is logged (limited by `amfToID3ConversionFailedMaximum`).
+* **Simulcast:** viewers of a simulcast rendition receive the events of the stream the publisher sent, as with WSE's own data channel routing. Viewers of a Transcoder rendition receive the events present on that rendition's stream.
+
+### Configuration
+
+In `Application.xml`, enable data channels in `MODULE` mode under `<WebRTC>` / `<Properties>`:
+
+```xml
+<Property>
+	<Name>webrtcEnableDataChannels</Name>
+	<Value>true</Value>
+	<Type>Boolean</Type>
+</Property>
+<Property>
+	<Name>webrtcDataChannelMode</Name>
+	<Value>MODULE</Value>
+	<Type>String</Type>
+</Property>
+```
+
+and turn the feature on under `<Application>` / `<Properties>`:
+
+```xml
+<Property>
+	<Name>metadataDataChannelEnabled</Name>
+	<Value>true</Value>
+	<Type>Boolean</Type>
+</Property>
+```
+
+`MODULE` mode is required: in the default `BROADCAST` mode WSE does not give modules access to the data channels. `MODULE` mode turns off WSE's own routing, so this module does that routing itself (`metadataDataChannelRelay`, on by default): each label the publisher opens is opened toward every viewer, including viewers who join later, and closed when the publisher closes it; publisher messages go to all viewers and viewer messages go to the publisher. Set `metadataDataChannelRelay` to `false` if another module in the application already routes data channels.
+
+The player in this repository connects with WHEP, which needs the following on top of a WebRTC-enabled application (see `wse.addon/conf` for a working setup):
+
+* `Application.xml`: `<Enable>true</Enable>` in `<WebRTC>`, and `webrtc` added to `<HTTPStreamers>`
+* `VHost.xml`: a `webrtc` entry in `<HTTPStreamerAdapters>`, and `webrtc` added to the `<HTTPStreamerAdapterIDs>` of an SSL `<HostPort>` (WHEP does not work on a non-SSL port)
+
+```xml
+<HTTPStreamerAdapter>
+	<ID>webrtc</ID>
+	<Name>webrtc</Name>
+	<Properties>
+	</Properties>
+</HTTPStreamerAdapter>
+```
+
+### Player
+
+The player makes the WebRTC offer, so it has to ask for data channels even though the server opens the channel:
+
+```js
+const pc = new RTCPeerConnection();
+pc.addTransceiver('video', { direction: 'recvonly' });
+pc.addTransceiver('audio', { direction: 'recvonly' });
+
+// Adds the data channel section to the offer without opening a visible channel
+pc.createDataChannel('__sctp_bootstrap__', { negotiated: true, id: 0 });
+
+pc.addEventListener('datachannel', (event) => {
+  if (event.channel.label !== 'metadata') return;
+  event.channel.addEventListener('message', (message) => {
+    const metadata = JSON.parse(message.data); // { eventType, guid, ...data }
+  });
+});
+// createOffer(), then WHEP: POST the offer to https://[address]/[application]/[stream]/whep
+```
+
+A complete player is in [webpage/webrtc.html](webpage/webrtc.html).
+
 ## Prerequisites
 
 * Wowza Streaming Engine™ 4.9.4 or later is required
+* WebRTC data channels require Wowza Streaming Engine™ 4.12 or later
 
 ## Build instructions
 
 1. Clone this repository to your local filesystem.
 2. Run `./build.sh`  This will build the module/jar file with the `wse-plugin-builder` using docker
+
+The build needs the Wowza Streaming Engine 4.12 (or later) libraries because of the WebRTC data channel API. The jar still runs on 4.9.4 and later.
 
 ## Run the Demo
 
@@ -36,7 +117,9 @@ After building the module, start Wowza Streaming Engine and Wowza Streaming Engi
 docker compose up
 ```
 
-2. View the stream on the provided [sample player page](http://wse-trial.wowza.com:8088/id3/index.html?src=http://wse-trial.wowza.com/live/myStream/playlist.m3u8).  This will insert ID3 tags and show them as they are received on this HLS stream `http://wse-trial.wowza.com/live/myStream/playlist.m3u8`
+2. View the stream on the provided [sample player page](http://wse-trial.wowza.com:8088/metadata-injection/hls.html?src=http://wse-trial.wowza.com/live/myStream/playlist.m3u8).  This will insert ID3 tags and show them as they are received on this HLS stream `http://wse-trial.wowza.com/live/myStream/playlist.m3u8`
+
+3. View the same stream over WebRTC on the [WebRTC sample player page](http://wse-trial.wowza.com:8088/metadata-injection/webrtc.html?src=https://wse-trial.wowza.com/live/myStream/whep). Press Play, then Send test event; the event shows up as it is received on the `metadata` data channel.
 
 
 ## Install on existing WSE instance
@@ -108,6 +191,15 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | amfToID3ConversionAddToManifest | Boolean | Adds to HLS Manifest tag `#EXT-X-METADATA-EVENT-*` with guid of event. Default false |
 | amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 
 | amfToID3ConversionFailedMaximum | Integer | How many failed log messages to log. Default 5
+| metadataDataChannelEnabled | Boolean | Send data events to WebRTC viewers over a data channel. Requires WSE 4.12+ and the WebRTC properties below. Default false |
+| metadataDataChannelLabel | String | Label of the data channel opened toward each WebRTC viewer. Default `metadata` |
+| metadataDataChannelRelay | Boolean | Forward the publisher's own data channels to viewers (and viewer messages to the publisher), replacing the WSE routing that `MODULE` mode turns off. Default true |
+
+### Properties (WebRTC):
+| Name                  | Type                                           | Description                                                                      |
+| -------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| webrtcEnableDataChannels | Boolean | Built-in WSE property (4.12+). Must be true for `metadataDataChannelEnabled`. Default false |
+| webrtcDataChannelMode | String | Built-in WSE property (4.12+). Must be `MODULE` for `metadataDataChannelEnabled`. Default `BROADCAST` |
 
 
 ### Properties (HTTPStreamer):

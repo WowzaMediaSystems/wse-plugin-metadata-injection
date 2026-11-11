@@ -31,7 +31,7 @@
 					<!-- <TcpNoDelay>false</TcpNoDelay> -->
 					<AcceptorBackLog>100</AcceptorBackLog>
 				</SocketConfiguration>
-				<HTTPStreamerAdapterIDs>cupertinostreaming,smoothstreaming,sanjosestreaming,dvrchunkstreaming,mpegdashstreaming</HTTPStreamerAdapterIDs>
+				<HTTPStreamerAdapterIDs>cupertinostreaming,smoothstreaming,sanjosestreaming,dvrchunkstreaming,mpegdashstreaming,webrtc</HTTPStreamerAdapterIDs>
 				<HTTPProviders>
 					<HTTPProvider>
 						<BaseClass>com.wowza.wms.http.HTTPCrossdomain</BaseClass>
@@ -94,18 +94,18 @@
 					<KeepAlive>true</KeepAlive>
 					<AcceptorBackLog>100</AcceptorBackLog>
 				</SocketConfiguration>
-				<HTTPStreamerAdapterIDs>cupertinostreaming,smoothstreaming,sanjosestreaming,dvrchunkstreaming,mpegdashstreaming</HTTPStreamerAdapterIDs>
+				<HTTPStreamerAdapterIDs>cupertinostreaming,smoothstreaming,sanjosestreaming,dvrchunkstreaming,mpegdashstreaming,webrtc</HTTPStreamerAdapterIDs>
 				<HTTPProviders>
 					<HTTPProvider>
 						<BaseClass>com.wowza.wms.http.HTTPCrossdomain</BaseClass>
 						<RequestFilters>*crossdomain.xml</RequestFilters>
 						<AuthenticationMethod>none</AuthenticationMethod>
 					</HTTPProvider>
-          <HTTPProvider>
-              <BaseClass>com.wowza.wms.webrtc.http.HTTPWebRTCExchangeSessionInfo</BaseClass>
-              <RequestFilters>*webrtc-session.json</RequestFilters>
-              <AuthenticationMethod>none</AuthenticationMethod>
-          </HTTPProvider>
+					<HTTPProvider>
+						<BaseClass>com.wowza.wms.webrtc.http.HTTPWebRTCExchangeSessionInfo</BaseClass>
+						<RequestFilters>*webrtc-session.json</RequestFilters>
+						<AuthenticationMethod>none</AuthenticationMethod>
+					</HTTPProvider>
 					<HTTPProvider>
 						<BaseClass>com.wowza.wms.http.HTTPClientAccessPolicy</BaseClass>
 						<RequestFilters>*clientaccesspolicy.xml</RequestFilters>
@@ -115,6 +115,12 @@
 						<BaseClass>com.wowza.wms.http.HTTPProviderMediaList</BaseClass>
 						<RequestFilters>*jwplayer.rss|*jwplayer.smil|*medialist.smil|*manifest-rtmp.f4m</RequestFilters>
 						<AuthenticationMethod>none</AuthenticationMethod>
+					</HTTPProvider>
+					<HTTPProvider>
+						<BaseClass>com.wowza.wms.plugin.metadatainjection.HTTPProviderMetadataInjection</BaseClass>
+						<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
+						<AuthenticationMethod>admin-basic</AuthenticationMethod>
+						<PasswordEncodingScheme>none</PasswordEncodingScheme>
 					</HTTPProvider>
 					<HTTPProvider>
 						<BaseClass>com.wowza.wms.http.HTTPServerVersion</BaseClass>
@@ -223,6 +229,12 @@
 			<HTTPStreamerAdapter>
 				<ID>webmstreaming</ID>
 				<Name>webmstreaming</Name>
+				<Properties>
+				</Properties>
+			</HTTPStreamerAdapter>
+			<HTTPStreamerAdapter>
+				<ID>webrtc</ID>
+				<Name>webrtc</Name>
 				<Properties>
 				</Properties>
 			</HTTPStreamerAdapter>

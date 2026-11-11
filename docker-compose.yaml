@@ -2,6 +2,7 @@ name: Wowza Streaming Engine My First Module
 services:
     wse:
         hostname: wse.docker
+        # WebRTC data channels need 4.12 or later; there is no versioned trial tag to pin to
         image: wowza/wowza-streaming-engine:latest-trial
         environment:
             - WSE_LICENSE_KEY=$WSE_LICENSE_KEY
@@ -33,10 +34,15 @@ services:
             - PLAYER_TOKEN=$PLAYER_TOKEN
             - ADMIN_USER=admin
             - ADMIN_PASSWORD=password
+            # HTTPS for the manager and sample pages, using the same Wowza-provided
+            # wse-trial.wowza.com certificate the engine uses (manager 4.10+).
+            # For your own certificate set JKS_FILE and JKS_PASSWORD instead.
+            - JKS_TRIAL=true
         volumes:
-            #- ./webpage:/usr/local/tomcat/webapps/ROOT/id3 puts behind WSEM auth
-            - ./webpage:/usr/local/tomcat/webapps/id3
+            #- ./webpage:/usr/local/tomcat/webapps/ROOT/metadata-injection puts behind WSEM auth
+            - ./webpage:/usr/local/tomcat/webapps/metadata-injection
         ports:
             - 8088:8080
+            - 8443:8443 # HTTPS; the manager's SSL connector listens on 8443 inside the container
         env_file:
             - .env
