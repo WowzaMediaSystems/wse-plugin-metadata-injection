@@ -18,7 +18,7 @@ services:
         ports:
             - 80:80
             - 443:443
-            - 8444:8444 # HTTPS, metadata injection API only (used by the sample pages when served over HTTPS)
+            - 9443:9443 # HTTPS, metadata injection API only (used by the sample pages when served over HTTPS)
             - 554:554
             - 1935:1935
             - 8087:8087

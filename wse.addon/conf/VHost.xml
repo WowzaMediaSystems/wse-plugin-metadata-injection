@@ -130,7 +130,7 @@
 				</HTTPProviders>
 			</HostPort>
 
-			<!-- 8444 with SSL: metadata injection API only. A browser never reuses a connection across
+			<!-- 9443 with SSL: metadata injection API only. A browser never reuses a connection across
 			     ports, so API calls from an HTTPS page stay off the connections that carry HLS or WHEP on 443,
 			     which WSE does not answer HTTPProvider requests on. -->
 			<HostPort>
@@ -138,7 +138,7 @@
 				<Type>Streaming</Type>
 				<ProcessorCount>${com.wowza.wms.TuningAuto}</ProcessorCount>
 				<IpAddress>*</IpAddress>
-				<Port>8444</Port>
+				<Port>9443</Port>
 				<HTTPIdent2Response></HTTPIdent2Response>
 				<SSLConfig>
 					<KeyStorePath>${com.wowza.wms.context.VHostConfigHome}/conf/tls.jks</KeyStorePath>

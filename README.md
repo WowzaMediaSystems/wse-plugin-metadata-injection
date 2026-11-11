@@ -134,7 +134,7 @@ The same pages are also served over plain HTTP at [http://wse-trial.wowza.com:80
 | 8443 | Manager | HTTPS: sample pages and Wowza Streaming Engine Manager. Enabled by `JKS_TRIAL=true` in `docker-compose.yaml`; set `JKS_FILE` and `JKS_PASSWORD` instead to use your own certificate. |
 | 8088 | Manager | HTTP: sample pages and Wowza Streaming Engine Manager |
 | 443 | Engine | HTTPS streaming: HLS playback and WebRTC (WHEP playback, WHIP publish) |
-| 8444 | Engine | HTTPS, metadata injection API only. Used by the sample pages when they are loaded over HTTPS. |
+| 9443 | Engine | HTTPS, metadata injection API only. Used by the sample pages when they are loaded over HTTPS. |
 | 1935, 80 | Engine | HTTP streaming and the metadata injection API. Used by the sample pages when they are loaded over HTTP. |
 
 The API has its own SSL port because a page loaded over HTTPS can only call HTTPS, and the API cannot share port 443 with playback: Wowza Streaming Engine does not answer an HTTP provider request that arrives on a keep-alive connection which has already carried HLS. A browser never reuses a connection across ports, so a port that serves only the API avoids this. See the `Metadata Injection API SSL` host port in [wse.addon/conf/VHost.xml](wse.addon/conf/VHost.xml).
