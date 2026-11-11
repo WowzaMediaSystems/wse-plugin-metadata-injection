@@ -90,45 +90,6 @@ The player and publisher in this repository connect with WHEP and WHIP, which ne
 </HTTPStreamerAdapter>
 ```
 
-### Player
-
-The player makes the WebRTC offer, so it has to ask for data channels even though the server opens the channel:
-
-```js
-const pc = new RTCPeerConnection();
-pc.addTransceiver('video', { direction: 'recvonly' });
-pc.addTransceiver('audio', { direction: 'recvonly' });
-
-// Adds the data channel section to the offer without opening a visible channel
-pc.createDataChannel('__sctp_bootstrap__', { negotiated: true, id: 0 });
-
-pc.addEventListener('datachannel', (event) => {
-  if (event.channel.label !== 'metadata') return;
-  event.channel.addEventListener('message', (message) => {
-    const metadata = JSON.parse(message.data); // { eventType, guid, ...data }
-  });
-});
-// createOffer(), then WHEP: POST the offer to https://[address]/[application]/[stream]/whep
-```
-
-A complete player is in [webpage/webrtc.html](webpage/webrtc.html).
-
-### Publisher
-
-A publisher that injects events opens the input channel itself and sends the JSON on it:
-
-```js
-const channel = pc.createDataChannel('metadata'); // metadataDataChannelInputLabel
-channel.addEventListener('message', (message) => {
-  const reply = JSON.parse(message.data); // { status, guid } or { status, reason }
-});
-// createOffer(), then WHIP: POST the offer to https://[address]/[application]/[stream]/whip
-// once the channel is open:
-channel.send(JSON.stringify({ event: 'test-event', id3: true, data: { stringTest: 'hello' } }));
-```
-
-A complete publisher is in [webpage/publish.html](webpage/publish.html).
-
 ## Prerequisites
 
 * Wowza Streaming Engine™ 4.9.4 or later is required
@@ -217,13 +178,14 @@ Optional: to secure the API with a `metadata-api-key` header instead of the `<Au
 
 ### Application.xml
 Add the following module to `<Modules>`. It converts the injected AMF data to ID3 tags for HLS and CMAF, adds the `programDateTime` ID3 tags, and handles the WebRTC data channels:
-```
+```xml
 <Module>
 	<Name>MetadataInjectionModule</Name>
 	<Description>MetadataInjectionModule</Description>
 	<Class>com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule</Class>
 </Module>
 ```
+
 > [!Note]
 > ### Removed class names (upgrading from 1.x or 2.x)
 > Version 2.0.0 moved the module and HTTP provider to the `com.wowza.wms.plugin.metadatainjection` package and deprecated the old class names. Version 3.0.0 removes them. A configuration that still uses an old name fails to load that class on 3.0.0, so update it before upgrading:
