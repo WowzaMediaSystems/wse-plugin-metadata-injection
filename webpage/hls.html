@@ -842,29 +842,13 @@
         updateStatusBadge('Paused', CONFIG.BADGE_COLORS.PAUSED);
       });
 
-      myPlayer.on(flowplayer.id3.events.ID3, async ({ data }) => {
-        const v = document.querySelector('#playerElement video');
-        const cue = data?.cue;
-
-
-        //if (!hasUserPressedPlay) return;
-        //if (isPaused) return;
-
+      watchId3Track(myPlayer, (cue) => {
         if (!cue || !cue.value) return;
 
         const eventType = cue.value.info;
         const eventData = cue.value.data;
 
-
-        if (eventType === CONFIG.EVENT_TYPE_PDT) {
-          //updatePdtAnchorFromCue(cue);
-          return;
-          //console.log('[pdt] anchor set', { pdtAnchorIso, pdtAnchorMediaTime });
-        }
-
-        //const cueStart = (typeof cue.startTime === 'number') ? cue.startTime : NaN;
-        //const videoNow = (v && typeof v.currentTime === 'number') ? v.currentTime : NaN;
-        //const timestamp = formatTimestampForDisplay(cueStart, videoNow);
+        if (eventType === CONFIG.EVENT_TYPE_PDT) return;
 
         displayRawLog(eventType, eventData);
       });
@@ -875,6 +859,51 @@
         updateStatusBadge('Error', CONFIG.BADGE_COLORS.ERROR);
         showError('Failed to load stream. Please check the URL format and try again.');
       });
+    }
+
+    // Safari garbage-collects the JavaScript wrapper of a text track cue that nothing references,
+    // and with it the `value` and `type` properties hls.js sets on the cue. The cue stays on the
+    // track but comes back empty, so the ID3 data is lost (in blocks, whenever a collection runs).
+    // Holding a reference to each cue keeps its wrapper, and so its data, alive.
+    const retainedCues = [];
+    const RETAINED_CUES_MAX = 2000;
+    const nativeAddCue = TextTrack.prototype.addCue;
+    TextTrack.prototype.addCue = function (cue) {
+      retainedCues.push(cue);
+      if (retainedCues.length > RETAINED_CUES_MAX) retainedCues.shift();
+      return nativeAddCue.call(this, cue);
+    };
+
+    // Reads ID3 cues straight from the video's `id3` metadata text track instead of using
+    // Flowplayer's ID3 plugin, which is unreliable in two ways:
+    //  - it only watches tracks announced by an `addtrack` event carrying the track, which Safari
+    //    does not deliver for the track hls.js creates, so it emits nothing there;
+    //  - it reports the track's activeCues on `cuechange`, which misses a cue that is only a few
+    //    milliseconds long (an event injected just before the next ID3 tag).
+    // Each cue is reported once, when playback reaches its start time.
+    function watchId3Track(video, onCue) {
+      const seen = new WeakSet();
+
+      const isId3Track = (track) => track && track.kind === 'metadata'
+        && (track.id === 'id3' || track.label === 'id3' || track.inBandMetadataTrackDispatchType === 'com.apple.streaming');
+
+      const check = () => {
+        for (const track of Array.from(video.textTracks || [])) {
+          if (!isId3Track(track)) continue;
+          if (track.mode === 'disabled') track.mode = 'hidden'; // a disabled track exposes no cues
+          for (const cue of Array.from(track.cues || [])) {
+            if (seen.has(cue) || cue.startTime > video.currentTime) continue;
+            seen.add(cue);
+            onCue(cue);
+          }
+        }
+      };
+
+      video.addEventListener('timeupdate', check);
+      const timer = setInterval(() => {
+        if (!video.isConnected) return clearInterval(timer);
+        check();
+      }, 100);
     }
 
     if (srcParam) createPlayer();
