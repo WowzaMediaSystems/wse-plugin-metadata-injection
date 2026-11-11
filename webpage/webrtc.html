@@ -262,6 +262,8 @@
       await stop();
       el.message.textContent = '';
       el.play.disabled = true;
+      // Shown while the WHEP request is in flight: Safari can take ~10s over its CORS preflight
+      setBadge(el.mediaBadge, 'media: connecting', '');
 
       try {
         const pc = new RTCPeerConnection();
@@ -332,7 +334,9 @@
 
     async function stop() {
       if (whepSessionUrl) {
-        try { await fetch(whepSessionUrl, { method: 'DELETE' }); } catch (e) { /* the session times out server side */ }
+        // Not awaited: the session also times out server side, and Safari can take ~10s over this
+        // request's CORS preflight, which would hold up Stop and the next Play
+        fetch(whepSessionUrl, { method: 'DELETE' }).catch(() => {});
         whepSessionUrl = null;
       }
       if (peerConnection) {
