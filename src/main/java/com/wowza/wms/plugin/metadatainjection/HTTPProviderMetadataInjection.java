@@ -197,8 +197,7 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 			injects.put(guid, new ArrayList<>());
 			if (async)
 			{
-				Thread t1 = new Thread(new InjectMetadataThread(appInst, stream, guid, actualObj), "InjectMetadataThread");
-				t1.start();
+				appInst.getVHost().getThreadPool().execute(new InjectMetadataThread(appInst, stream, guid, actualObj));
 				String msg = "{\"status\":\"success\", \"guid\":\"" + guid + "\"}";
 				sendResponse(resp, msg, 201);
 			}
@@ -387,14 +386,12 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		{
 			injects.put(guid, new ArrayList<>());
 		}
-		Thread thread = new Thread(() -> {
+		appInst.getVHost().getThreadPool().execute(() -> {
 			WMSLogger threadLogger = WMSLoggerFactory.getLoggerObj(CLASS, appInst);
 			threadLogger.info(LOGPREFIX + guid + ": Starting metadata Inject as thread");
 			boolean ok = injectMetadata(appInst, stream, guid, payload);
 			threadLogger.info(LOGPREFIX + guid + ": Finished metadata Inject as thread. " + (ok ? "Injected" : "Not injected"));
-		}, "InjectMetadataThread");
-		thread.setDaemon(true);
-		thread.start();
+		});
 		return guid;
 	}
 
