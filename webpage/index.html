@@ -60,7 +60,9 @@
 
     .navbar-text-wrapper { float: left; padding-left: 10px; }
 
-    .content { padding: 10px 15px; }
+    /* Boxes pulled in from the top and sides; small screens keep a narrow gutter */
+    .content { max-width: 1000px; margin: 0 auto; padding: 48px 15px 15px; }
+    @media (min-width: 769px) { .content { padding: 64px 48px 24px; } }
 
     .intro {
       background: #f5f5f5;
