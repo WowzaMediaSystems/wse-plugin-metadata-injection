@@ -130,6 +130,47 @@
 				</HTTPProviders>
 			</HostPort>
 
+			<!-- 8444 with SSL: metadata injection API only. A browser never reuses a connection across
+			     ports, so API calls from an HTTPS page stay off the connections that carry HLS or WHEP on 443,
+			     which WSE does not answer HTTPProvider requests on. -->
+			<HostPort>
+				<Name>Metadata Injection API SSL</Name>
+				<Type>Streaming</Type>
+				<ProcessorCount>${com.wowza.wms.TuningAuto}</ProcessorCount>
+				<IpAddress>*</IpAddress>
+				<Port>8444</Port>
+				<HTTPIdent2Response></HTTPIdent2Response>
+				<SSLConfig>
+					<KeyStorePath>${com.wowza.wms.context.VHostConfigHome}/conf/tls.jks</KeyStorePath>
+					<!-- vi-aws.techdemos.wowza.com -->
+					<KeyStorePassword>SwX1cyk7ZuRO</KeyStorePassword>
+					<KeyStoreType>JKS</KeyStoreType>
+					<DomainToKeyStoreMapPath></DomainToKeyStoreMapPath>
+					<SSLProtocol>TLS</SSLProtocol>
+					<Algorithm>SunX509</Algorithm>
+					<CipherSuites></CipherSuites>
+					<Protocols></Protocols>
+					<AllowHttp2>false</AllowHttp2>
+				</SSLConfig>
+				<SocketConfiguration>
+					<ReuseAddress>true</ReuseAddress>
+					<ReceiveBufferSize>65000</ReceiveBufferSize>
+					<ReadBufferSize>65000</ReadBufferSize>
+					<SendBufferSize>65000</SendBufferSize>
+					<KeepAlive>true</KeepAlive>
+					<AcceptorBackLog>100</AcceptorBackLog>
+				</SocketConfiguration>
+				<HTTPStreamerAdapterIDs></HTTPStreamerAdapterIDs>
+				<HTTPProviders>
+					<HTTPProvider>
+						<BaseClass>com.wowza.wms.plugin.metadatainjection.HTTPProviderMetadataInjection</BaseClass>
+						<RequestFilters>v1/server/plugin/metaDataInjection*</RequestFilters>
+						<AuthenticationMethod>admin-basic</AuthenticationMethod>
+						<PasswordEncodingScheme>none</PasswordEncodingScheme>
+					</HTTPProvider>
+				</HTTPProviders>
+			</HostPort>
+
 			<!-- Admin HostPort -->
 			<HostPort>
 				<Name>Default Admin</Name>

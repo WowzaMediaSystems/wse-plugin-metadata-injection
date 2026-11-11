@@ -387,6 +387,9 @@
       event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
     });
 
+    // Engine SSL port that serves only the injection API (see wse.addon/conf/VHost.xml)
+    const API_SSL_PORT = 8444;
+
     async function sendTestEvent() {
       // .../{app}/{stream}/whep
       const whepUrl = new URL(el.whepUrl.value.trim());
@@ -397,9 +400,10 @@
       }
       const streamName = parts[parts.length - 2];
       const appName = parts[parts.length - 3];
-      // An HTTPS page can only call HTTPS, so it uses the engine's SSL port (443); otherwise the
-      // non-SSL streaming port, which keeps the API off the connections WHEP uses
-      const apiBase = window.location.protocol === 'https:' ? `https://${whepUrl.hostname}` : `http://${whepUrl.hostname}:1935`;
+      // An HTTPS page can only call HTTPS, so it uses the engine's API-only SSL port; otherwise the
+      // non-SSL streaming port. Either way the API stays off the connections WHEP and HLS use on 443:
+      // a browser never reuses a connection across ports.
+      const apiBase = window.location.protocol === 'https:' ? `https://${whepUrl.hostname}:${API_SSL_PORT}` : `http://${whepUrl.hostname}:1935`;
       const apiUrl = `${apiBase}/v1/server/plugin/metaDataInjection/applications/${appName}/streams/${streamName}`;
 
       const username = window.APP_CONFIG?.ADMIN_USER || '';
@@ -448,12 +452,11 @@
     }
 
     // WSE answers the CORS preflight (OPTIONS) itself, then never answers the POST the browser sends
-    // on that same connection. Timing out drops the connection, and the retry goes out on another one
-    // without a preflight (the browser caches it for 60s). On an HTTPS page the API shares port 443
-    // with WHEP and with any HLS player open in another tab, so a retry can land on another unusable
-    // connection; several attempts are allowed until one gets a fresh connection. Same as hls.html.
+    // on that same connection. Timing out drops the connection, and the retry goes out on a new one
+    // without a preflight (the browser caches it for 60s). This works because the API port carries
+    // nothing else, so no other unusable connection is idle. Same as hls.html.
     const SEND_TIMEOUT_MS = 1500;
-    const SEND_MAX_ATTEMPTS = 6;
+    const SEND_MAX_ATTEMPTS = 3;
 
     async function postWithRetry(apiUrl, request) {
       for (let attempt = 1; ; attempt++) {

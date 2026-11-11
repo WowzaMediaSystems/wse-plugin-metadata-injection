@@ -911,6 +911,9 @@
       event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
     });
 
+    // Engine SSL port that serves only the injection API (see wse.addon/conf/VHost.xml)
+    const API_SSL_PORT = 8444;
+
     function sendId3TestData()
     {
       var id3Message = new Object();
@@ -955,8 +958,9 @@
       // hostname, not host: host already carries the port when the stream URL has one.
       let apiBase;
       if (window.location.protocol === 'https:') {
-        // An HTTPS page can only call HTTPS: use the engine's SSL port (443)
-        apiBase = 'https://' + streamUrl.hostname;
+        // An HTTPS page can only call HTTPS. Use the engine's API-only SSL port, not 443: a browser
+        // never reuses a connection across ports, so the call stays off the connections carrying HLS.
+        apiBase = 'https://' + streamUrl.hostname + ':' + API_SSL_PORT;
       } else {
         // Use a port the player is not using (the provider listens on both 80 and 1935): WSE never
         // answers an HTTPProvider request sent on a keep-alive connection that already carried HLS.
@@ -975,11 +979,10 @@
 
     // The same WSE issue hits the CORS preflight: WSE answers the OPTIONS itself, then never
     // answers the POST the browser sends on that connection. Timing out drops the connection, and
-    // the retry goes out on another one without a preflight (the browser caches it for 60s).
-    // On an HTTPS page the API shares port 443 with the player, so a retry can land on another
-    // connection that carried HLS; several attempts are allowed until one gets a fresh connection.
+    // the retry goes out on a new one without a preflight (the browser caches it for 60s). This
+    // works because the API port carries nothing else, so no other unusable connection is idle.
     const ID3_POST_TIMEOUT_MS = 1500;
-    const ID3_POST_MAX_ATTEMPTS = 6;
+    const ID3_POST_MAX_ATTEMPTS = 3;
 
     // "Last GUID" shows the GUID of the last send, or the error the API returned for it
     function setLastGuid(text, isError) {
