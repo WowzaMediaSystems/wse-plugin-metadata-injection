@@ -196,29 +196,25 @@ add HTTPProvider to each `<HostPort>` that should serve the API. If a browser pa
 </HTTPProvider>
 ```  
 
-add Property
-						<Property>
-							<Name>useMetadataApiKey</Name>
-							<Value>true</Value>
-						</Property>
+Optional: to secure the API with a `metadata-api-key` header instead of the `<AuthenticationMethod>` above, add these to the VHost-level `<Properties>` (see [Securing the API](#securing-the-api)). `optionsCORSHeadersAddMain` is only needed when a browser page calls the API.
 
-add Property, update to either metadata-api-key or authorization
-```
+```xml
 <Property>
-	<Name>optionsCORSHeadersAddMain</Name>
-	<Value>Access-Control-Allow-Headers:metadata-api-key</Value>
-	<Type>String</Type>
-</Property>	
-```
-Optional
-```
+	<Name>useMetadataApiKey</Name>
+	<Value>true</Value>
+</Property>
 <Property>
 	<Name>metadataApiKey</Name>
 	<Value>secretkey</Value>
 	<Type>String</Type>
 </Property>
-
+<Property>
+	<Name>optionsCORSHeadersAddMain</Name>
+	<Value>Access-Control-Allow-Headers:metadata-api-key</Value>
+	<Type>String</Type>
+</Property>
 ```
+
 ### Application.xml
 Add the following module to `<Modules>`. It converts the injected AMF data to ID3 tags for HLS and CMAF, adds the `programDateTime` ID3 tags, and handles the WebRTC data channels:
 ```
