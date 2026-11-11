@@ -18,6 +18,13 @@ public class AMFToID3GeneralConverter implements IAMFToID3Converter
 
 	}
 
+	// Writes one frame per key, so there is no single payload string
+	@Override
+	public String convertAMFDataListToPayload(AMFDataList amfList)
+	{
+		return null;
+	}
+
 	@SuppressWarnings("rawtypes")
 	public void convertAMFDataListToID3(AMFDataList amfList, AMFToID3ConverterContext context, ID3Frames id3Frames)
 	{

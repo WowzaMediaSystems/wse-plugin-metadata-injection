@@ -1,0 +1,1065 @@
+<html>
+<head>
+  <title>Wowza ID3 Metadata Player</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="//www.wowza.com/wp-content/uploads/wowza-logo-48x48-1-1.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="//www.wowza.com/wp-content/uploads/wowza-logo-48x48-1-1.ico" type="image/x-icon">
+
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/flowplayer.min.js"></script>
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/plugins/hls.min.js"></script>
+  <script src="//cdn.flowplayer.com/releases/native/3/stable/plugins/id3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <link rel="stylesheet" href="//cdn.flowplayer.com/releases/native/3/stable/style/flowplayer.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #333;
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .navbar {
+      background-color: #222;
+      border: 0;
+      margin-bottom: 0;
+      min-height: 50px;
+      position: relative;
+    }
+
+    .navbar-inverse { background-color: #222; border-color: transparent; }
+
+    .navbar-static-top { z-index: 1000; border-width: 0 0 1px; }
+
+    .navbar-brand {
+      float: left;
+      padding: 3px 15px;
+      font-size: 18px;
+      line-height: 20px;
+      height: 50px;
+      color: #eeeeee;
+      text-decoration: none;
+    }
+
+    .navbar-brand:hover { color: #eeeeee; text-decoration: none; }
+
+    .navbar-brand-wse {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #eeeeee;
+      line-height: 1.2;
+    }
+
+    .navbar-brand-mgr {
+      text-transform: uppercase;
+      color: #999;
+      font-size: 0.65em;
+      font-weight: bold;
+    }
+
+    .hidden-sm, .hidden-xs { display: block !important; }
+    .visible-sm, .visible-xs { display: none !important; }
+
+    @media (max-width: 767px) {
+      .hidden-xs { display: none !important; }
+      .visible-xs { display: block !important; }
+    }
+
+    .container-full {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .container-full > * {
+      margin-left: 15px;
+      margin-right: 15px;
+    }
+
+    .controls-section {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px 15px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .error-message {
+      background: #f2dede;
+      border: 1px solid #ebccd1;
+      border-radius: 4px;
+      padding: 10px 15px;
+      margin-top: 10px;
+      color: #a94442;
+    }
+
+    .url-input-group {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .url-input-group label { font-weight: bold; }
+
+    .url-input-group input[type="text"][readonly] { background-color: #eee; }
+    .url-input-group input[type="text"].error { color: #a94442; border-color: #ebccd1; }
+
+    .url-input-group input[type="text"] {
+      display: block;
+      flex: 1;
+      min-width: 220px;
+      padding: 6px 12px;
+      font-size: 14px;
+      line-height: 1.42857143;
+      color: #555;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .url-input-group input:focus {
+      border-color: #66afe9;
+      outline: 0;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      margin-bottom: 0;
+      font-size: 14px;
+      font-weight: normal;
+      line-height: 1.42857143;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      user-select: none;
+      background-image: none;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background-color: #337ab7;
+      border-color: #2e6da4;
+    }
+
+    .btn-primary:hover, .btn-primary:focus {
+      color: #fff;
+      background-color: #286090;
+      border-color: #204d74;
+    }
+
+    /* Controls: sliders */
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid #e4e4e4;
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+
+    .control-group input[type="range"] {
+      width: 170px;
+      accent-color: #ff8400;
+    }
+
+    .control-value {
+      display: inline-block;
+      min-width: 4.5ch;
+      text-align: right;
+      font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
+      font-weight: 700;
+      color: #222;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .card-icon { height: 28px; width: auto; margin-right: 8px; vertical-align: middle; }
+
+    .badge {
+      background: #ff8400;
+      color: #fff;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+
+    #playerElement {
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      align-items: center;
+      justify-content: center;
+      background: #000000;
+    }
+
+    #playerElement video {
+    }
+
+    .tab-controls {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+
+    /* Each tab label is a bar with right-justified actions inside */
+    .tab-controls label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+
+      padding: 6px 10px;
+      background: #222;
+      border: none;
+      cursor: pointer;
+      font-weight: normal;
+      font-size: 14px;
+      color: #999;
+      user-select: none;
+      overflow: visible;
+      background: #ff8400;
+      color: #fff;    
+    }
+
+    .tab-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+      background: #ff8400;
+      color: #fff;    
+    }
+
+    .tab-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: #ff8400;
+      color: #fff;
+    }
+
+    .tab-actions {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+
+
+    .tab-content {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .tab-content.active { display: flex; }
+
+    .event-display, .log-display {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: #222;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .log-display { white-space: pre-wrap; }
+
+    .log-entry {
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,132,0,0.2);
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+
+    .log-timestamp {
+      color: #ff8400;
+      font-weight: bold;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .log-json {
+      color: #555;
+      margin-left: 0;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    .event-item {
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-left: 3px solid #ff8400;
+      border-radius: 3px;
+    }
+
+    .event-time {
+      color: #555;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+
+    .event-data {
+      line-height: 1.4;
+      font-size: 13px;
+      color: #222;
+    }
+
+    .detection-label {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+      white-space: nowrap;
+      font-weight: 700;
+      margin-right: 3px;
+      margin-bottom: 3px;
+    }
+
+    .detection-label.confidence-high {
+      background: rgba(92,184,92,0.2);
+      color: #3c763d;
+      border: 1px solid rgba(92,184,92,0.4);
+    }
+
+    .detection-label.confidence-medium-high,
+    .detection-label.confidence-medium-low {
+      background: rgba(240,173,78,0.2);
+      color: #c87f0a;
+      border: 1px solid rgba(240,173,78,0.4);
+    }
+
+    .detection-label.confidence-low {
+      background: rgba(217,83,79,0.2);
+      color: #a94442;
+      border: 1px solid rgba(217,83,79,0.4);
+    }
+
+    .hidden { display: none; }
+
+    .navbar-logo { height: 44px; width: 44px; float: left; }
+
+    .navbar-text-wrapper { float: left; padding-left: 10px; }
+
+    .placeholder-text {
+      color: #777;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    @media (min-width: 769px) {
+      html, body {
+        height: 100vh;
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .controls-section {
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .url-input-group label { font-size: 1rem; }
+
+      .url-input-group input[type="text"] {
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+      }
+
+      .btn {
+        border-radius: 4px;
+        padding: 10px 20px;
+        font-size: 0.95rem;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .card {
+        border-radius: 12px;
+        padding: 20px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .card h2 {
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+      }
+
+      .badge {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+
+      .event-display { border-radius: 8px; padding: 16px; font-size: 0.9rem; }
+      .log-display { border-radius: 8px; padding: 16px; font-size: 0.85rem; }
+
+      .log-entry { margin-bottom: 20px; padding-bottom: 20px; }
+      .log-timestamp { font-size: 0.85rem; }
+
+      .event-item {
+        margin-bottom: 8px;
+        padding: 8px 10px;
+        border-left: 3px solid #ff8400;
+        border-radius: 4px;
+      }
+
+      .event-time { font-size: 0.85rem; }
+    }
+
+    /* Controls rows share one grid so labels, text boxes and buttons line up */
+    .controls-grid { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+    .controls-grid .url-input-group { display: contents; }
+    .controls-grid .url-input-group input[type="text"] { min-width: 0; width: 100%; }
+    .controls-grid .row-actions { display: flex; gap: 10px; }
+    .controls-grid .row-actions .btn { flex: 1; justify-content: center; }
+
+    /* Clear button on the right of the "Raw JSON" bar */
+    .btn-clear { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #fff; background: transparent; border: 1px solid #fff; border-radius: 4px; cursor: pointer; }
+    .btn-clear:hover, .btn-clear:focus { color: #ff8400; background: #fff; }
+
+    /* Config panel: delay / repeat / repeatInterval sent with each test event */
+    .event-config { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 14px; }
+    .event-config[hidden] { display: none; }
+    .event-config label { display: inline-flex; align-items: center; gap: 8px; font-weight: bold; }
+    .event-config input[type="number"] { width: 100px; padding: 6px 10px; font-family: inherit; font-size: 14px; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; }
+    .event-config input:focus { border-color: #66afe9; outline: 0; box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6); }
+    .event-config .unit { font-weight: normal; color: #777; }
+
+    .btn:disabled { opacity: 0.5; cursor: default; }
+  </style>
+
+</head>
+
+<body>
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">
+      <img class="navbar-logo" src="icon-wse.png" />
+      <div class="navbar-text-wrapper">
+        <div class="navbar-brand-wse">Wowza Streaming Engine</div>
+        <div class="navbar-brand-mgr">Metadata-Injection</div>
+      </div>
+    </a>
+  </nav>
+
+  <div class="container-full">
+    <div class="controls-section">
+      <div class="controls-grid">
+        <div class="url-input-group">
+          <label>HLS Stream URL:</label>
+          <input type="text" id="playerUrl" value="" placeholder="Enter HLS playlist URL (.m3u8)">
+          <div class="row-actions">
+            <button class="btn btn-primary" id="loadBtn" onclick="createPlayer()">Load <i class="fa fa-arrow-right"></i></button>
+          </div>
+        </div>
+        <div class="url-input-group">
+          <label>Event String:</label>
+          <input type="text" id="stringTest" value="" placeholder="Enter a String for the ID3 stringTest value">
+          <div class="row-actions">
+            <button class="btn btn-primary" id="sendBtn" onclick="sendId3TestData()">Send Event (API) <i class="fa fa-arrow-right"></i></button>
+          </div>
+        </div>
+        <div class="url-input-group">
+          <label for="lastGuid">Last GUID sent:</label>
+          <input type="text" id="lastGuid" value="" readonly placeholder="GUID of the last event sent, or the error the API returned">
+          <div class="row-actions">
+            <button type="button" class="btn btn-primary" id="eventConfigBtn" aria-expanded="false" aria-controls="eventConfig">Config <i class="fa fa-cog"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="event-config" id="eventConfig" hidden>
+        <label>Delay: <input type="number" id="cfgDelay" value="500" min="0" max="30000" step="100"> <span class="unit">ms</span></label>
+        <label>Repeat: <input type="number" id="cfgRepeat" value="2" min="1" max="10" step="1"> <span class="unit">times</span></label>
+        <label>Repeat Interval: <input type="number" id="cfgRepeatInterval" value="500" min="0" max="5000" step="100"> <span class="unit">ms</span></label>
+      </div>
+      <div id="errorMessage" class="error-message hidden"></div>
+    </div>
+
+    <div class="main-grid">
+      <div class="card">
+        <h2><img class="card-icon" src="apple.png" alt="Apple HLS" title="Apple HLS"><img class="card-icon" src="monitor.png" alt="Player" title="Player">Video Player</h2>
+        <div id="playerElement" ></div>
+      </div>
+
+      <div class="card">
+        <h2>
+          <img class="card-icon" src="metadata.png" alt="Metadata" title="Metadata">Live ID3 Events
+          <span class="badge" id="statusBadge">Ready</span>
+        </h2>
+
+        <div class="tab-controls">
+
+          <label for="tabRaw" id="labelTabRaw">
+            <span class="tab-left">
+              <span class="tab-title active">Raw JSON</span>
+            </span>
+            <span class="tab-actions">
+              <button type="button" class="btn-clear" id="clearLogBtn" onclick="clearLog()" title="Clear the events below">Clear <i class="fa fa-trash"></i></button>
+            </span>
+          </label>
+        </div>
+
+
+        <div class="tab-content" id="rawView">
+          <div class="log-display" id="logDisplay">
+            <div class="placeholder-text">
+              Waiting for playback to start...<br>
+              Click play to see raw ID3 metadata
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app_config.jsp"></script>
+  <script>
+
+
+    const CONFIG = {
+      EVENT_TYPE_SCENE_DETECTION_POSTIFX: 'detection',
+      EVENT_TYPE_PDT: 'programDateTime',
+      MIN_SCORE_DEFAULT: 0.90,
+
+      CONFIDENCE_THRESHOLDS: {
+        HIGH: 0.75,
+        MEDIUM_HIGH: 0.50,
+        MEDIUM_LOW: 0.25
+      },
+      BADGE_COLORS: {
+        LOADING: '#f0ad4e',
+        READY: '#ff8400',
+        PLAYING: '#5cb85c',
+        PAUSED: '#f0ad4e',
+        ERROR: '#d9534f'
+      },
+      FLOWPLAYER_TOKEN: window.APP_CONFIG?.FLOWPLAYER_TOKEN || '',
+      PLACEHOLDER_HTML: '<div class="placeholder-text">Waiting for playback to start...<br>Click play to see ID3 metadata events</div>',
+      MAX_HISTORY_ITEMS: 100
+    };
+
+    const elements = {
+      playerUrl: document.getElementById('playerUrl'),
+      errorMessage: document.getElementById('errorMessage'),
+      playerElement: document.getElementById('playerElement'),
+      logDisplay: document.getElementById('logDisplay'),
+      statusBadge: document.getElementById('statusBadge'),
+      rawView: document.getElementById('rawView'),
+      stringTest: document.getElementById('stringTest'),
+      labelTabRaw: document.getElementById('labelTabRaw')
+    };
+
+    let myPlayer = null;
+    let playerStartTime = null;
+    let currentLoadingUrl = null;
+
+    let hasUserPressedPlay = false;
+
+    // Pause state (Option A: no hard-freeze)
+    let isPaused = false;
+
+    // PDT anchor state
+    let pdtAnchorIso = null;
+    let pdtAnchorMediaTime = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const srcParam = urlParams.get('src');
+    elements.rawView.classList.add('active');
+
+    if (srcParam) elements.playerUrl.value = srcParam;
+
+    function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+
+
+    function persistParamsToUrl(explicitSrc) {
+      const params = new URLSearchParams(window.location.search);
+      const src = explicitSrc ?? elements.playerUrl.value.trim();
+
+      if (src) params.set('src', src);
+
+      history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    }
+
+    function getConfidenceClass(confidence) {
+      if (confidence > CONFIG.CONFIDENCE_THRESHOLDS.HIGH) return 'confidence-high';
+      if (confidence > CONFIG.CONFIDENCE_THRESHOLDS.MEDIUM_HIGH) return 'confidence-medium-high';
+      if (confidence > CONFIG.CONFIDENCE_THRESHOLDS.MEDIUM_LOW) return 'confidence-medium-low';
+      return 'confidence-low';
+    }
+
+    function clearPlaceholder(element) {
+      const placeholder = element.querySelector('.placeholder-text');
+      if (placeholder) element.innerHTML = '';
+    }
+
+    function trimHistory(containerEl, selector, maxItems) {
+      const items = containerEl.querySelectorAll(selector);
+      if (items.length > maxItems) {
+        for (let i = maxItems; i < items.length; i++) items[i].remove();
+      }
+    }
+
+    // GUIDs of the last few events received, to flag repeats of the same event in the log
+    const RECENT_GUID_LIMIT = 10;
+    const recentGuids = [];
+
+    // True when this GUID is already in the cache; otherwise remembers it
+    function isDuplicateGuid(guid) {
+      if (!guid) return false;
+      if (recentGuids.includes(guid)) return true;
+      recentGuids.push(guid);
+      if (recentGuids.length > RECENT_GUID_LIMIT) recentGuids.shift();
+      return false;
+    }
+
+    function displayRawLog(eventType, data) {
+
+      // No whitespace between the tags: .log-display is pre-wrap, so it would show up as blank lines
+      const entry = (heading, body) =>
+        `<div class="log-entry"><div class="log-timestamp">${escapeHtml(heading)}</div><div class="log-json">${escapeHtml(body)}</div></div>`;
+
+      let logContent = '';
+      try {
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+        const dup = isDuplicateGuid(parsed.guid) ? '[Dup] ' : '';
+        logContent = entry(`${dup}${parsed.guid} -> ${eventType}`, JSON.stringify(parsed, null, 2));
+      } catch (e) {
+        logContent = entry(eventType, String(data));
+      }
+
+      clearPlaceholder(elements.logDisplay);
+      elements.logDisplay.insertAdjacentHTML('afterbegin', logContent);
+      trimHistory(elements.logDisplay, '.log-entry', CONFIG.MAX_HISTORY_ITEMS);
+      elements.logDisplay.scrollTop = 0;
+    }
+
+
+
+    function clearLog() {
+      elements.logDisplay.innerHTML = hasUserPressedPlay
+        ? '<div class="placeholder-text">Playing... awaiting ID3 metadata</div>'
+        : CONFIG.PLACEHOLDER_HTML;
+      elements.logDisplay.scrollTop = 0;
+    }
+
+    function updateStatusBadge(text, color) {
+      elements.statusBadge.textContent = text;
+      elements.statusBadge.style.background = color;
+    }
+
+    function showError(message) {
+      elements.errorMessage.textContent = message;
+      elements.errorMessage.classList.remove('hidden');
+    }
+
+    function hideError() {
+      elements.errorMessage.classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    // --- Player creation ---
+    function createPlayer() {
+      const url = elements.playerUrl.value.trim();
+      if (!url) {
+        showError('Please enter a stream URL');
+        return;
+      }
+
+      hideError();
+      currentLoadingUrl = url;
+      persistParamsToUrl(url);
+
+      c = false;
+
+      pdtAnchorIso = null;
+      pdtAnchorMediaTime = null;
+
+      if (myPlayer != null) {
+        try {
+          myPlayer.destroy();
+          myPlayer = null;
+        } catch (e) {
+          console.error('Error destroying player:', e);
+        }
+      }
+
+      const playerContainer = elements.playerElement.parentNode;
+      const newPlayerElement = document.createElement('div');
+      newPlayerElement.id = 'playerElement';
+      playerContainer.replaceChild(newPlayerElement, elements.playerElement);
+      elements.playerElement = newPlayerElement;
+
+      setTimeout(() => initializeNewPlayer(url), 50);
+    }
+
+    function initializeNewPlayer(url) {
+      playerStartTime = null;
+      hasUserPressedPlay = false;
+
+      elements.logDisplay.innerHTML = CONFIG.PLACEHOLDER_HTML;
+
+      updateStatusBadge('Loading...', CONFIG.BADGE_COLORS.LOADING);
+
+      myPlayer = flowplayer("#playerElement", {
+        src: url,
+        token: CONFIG.FLOWPLAYER_TOKEN,
+        autoplay: true,
+        title: "ID3 Tags",
+        controls: true,
+        loop: true,
+        scaling: 'fit',
+        ui: flowplayer.ui.USE_PLAY_3,
+
+        hls: {
+          native: false,
+          liveDurationInfinity: true
+        }
+      });
+
+      myPlayer.on('ready', () => {
+        updateStatusBadge('Ready', CONFIG.BADGE_COLORS.READY);
+        console.log('[player] ready');
+      });
+
+      myPlayer.on('play', () => {
+        hasUserPressedPlay = true;
+        if (!playerStartTime) playerStartTime = Date.now();
+
+        isPaused = false;
+
+        updateStatusBadge('Playing', CONFIG.BADGE_COLORS.PLAYING);
+        console.log('[player] play');
+
+        clearPlaceholder(elements.logDisplay);
+
+        if (!elements.logDisplay.querySelector('.log-entry')) {
+          elements.logDisplay.innerHTML = `<div class="placeholder-text">Playing... awaiting ID3 metadata</div>`;
+        }
+
+        elements.logDisplay.scrollTop = 0;
+      });
+
+      // Option A: no forced pause, no freeze loop, no video currentTime rewrites
+      myPlayer.on('pause', () => {
+        console.log('[player] pause');
+        isPaused = true;
+        updateStatusBadge('Paused', CONFIG.BADGE_COLORS.PAUSED);
+      });
+
+      watchId3Track(myPlayer, (cue) => {
+        if (!cue || !cue.value) return;
+
+        const eventType = cue.value.info;
+        const eventData = cue.value.data;
+
+        if (eventType === CONFIG.EVENT_TYPE_PDT) return;
+
+        displayRawLog(eventType, eventData);
+      });
+
+      myPlayer.on('error', (error) => {
+        console.error('Player error:', error);
+        if (url !== currentLoadingUrl) return;
+        updateStatusBadge('Error', CONFIG.BADGE_COLORS.ERROR);
+        showError('Failed to load stream. Please check the URL format and try again.');
+      });
+    }
+
+    // Safari garbage-collects the JavaScript wrapper of a text track cue that nothing references,
+    // and with it the `value` and `type` properties hls.js sets on the cue. The cue stays on the
+    // track but comes back empty, so the ID3 data is lost (in blocks, whenever a collection runs).
+    // Holding a reference to each cue keeps its wrapper, and so its data, alive.
+    const retainedCues = [];
+    const RETAINED_CUES_MAX = 2000;
+    const nativeAddCue = TextTrack.prototype.addCue;
+    TextTrack.prototype.addCue = function (cue) {
+      retainedCues.push(cue);
+      if (retainedCues.length > RETAINED_CUES_MAX) retainedCues.shift();
+      return nativeAddCue.call(this, cue);
+    };
+
+    // Reads ID3 cues straight from the video's `id3` metadata text track instead of using
+    // Flowplayer's ID3 plugin, which is unreliable in two ways:
+    //  - it only watches tracks announced by an `addtrack` event carrying the track, which Safari
+    //    does not deliver for the track hls.js creates, so it emits nothing there;
+    //  - it reports the track's activeCues on `cuechange`, which misses a cue that is only a few
+    //    milliseconds long (an event injected just before the next ID3 tag).
+    // Each cue is reported once, when playback reaches its start time.
+    function watchId3Track(video, onCue) {
+      const seen = new WeakSet();
+
+      const isId3Track = (track) => track && track.kind === 'metadata'
+        && (track.id === 'id3' || track.label === 'id3' || track.inBandMetadataTrackDispatchType === 'com.apple.streaming');
+
+      const check = () => {
+        for (const track of Array.from(video.textTracks || [])) {
+          if (!isId3Track(track)) continue;
+          if (track.mode === 'disabled') track.mode = 'hidden'; // a disabled track exposes no cues
+          for (const cue of Array.from(track.cues || [])) {
+            if (seen.has(cue) || cue.startTime > video.currentTime) continue;
+            seen.add(cue);
+            onCue(cue);
+          }
+        }
+      };
+
+      video.addEventListener('timeupdate', check);
+      const timer = setInterval(() => {
+        if (!video.isConnected) return clearInterval(timer);
+        check();
+      }, 100);
+    }
+
+    if (srcParam) createPlayer();
+
+    setInterval(() => {
+      const v = document.querySelector('#playerElement video');
+      if (!v) return;
+      const b = v.buffered;
+      if (!b || b.length === 0) return;
+      const end = b.end(b.length - 1);
+    }, 1000);
+
+    // Config panel: values sent with each test event. Limits match the plugin's own caps.
+    const EVENT_CONFIG_FIELDS = {
+      delay: { id: 'cfgDelay', fallback: 500, min: 0, max: 30000 },
+      repeat: { id: 'cfgRepeat', fallback: 2, min: 1, max: 10 },
+      repeatInterval: { id: 'cfgRepeatInterval', fallback: 500, min: 0, max: 5000 }
+    };
+
+    function getEventConfig() {
+      const config = {};
+      for (const [name, field] of Object.entries(EVENT_CONFIG_FIELDS)) {
+        const input = document.getElementById(field.id);
+        let value = parseInt(input.value, 10);
+        if (Number.isNaN(value)) value = field.fallback;
+        value = Math.min(field.max, Math.max(field.min, value));
+        input.value = value; // show what is actually sent
+        config[name] = value;
+      }
+      return config;
+    }
+
+    document.getElementById('eventConfigBtn').addEventListener('click', (event) => {
+      const panel = document.getElementById('eventConfig');
+      panel.hidden = !panel.hidden;
+      event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
+    });
+
+    // Engine SSL port that serves only the injection API (see wse.addon/conf/VHost.xml)
+    const API_SSL_PORT = 9443;
+
+    function sendId3TestData()
+    {
+      var id3Message = new Object();
+      id3Message.event = "test-event";
+      id3Message.async = true;
+      const eventConfig = getEventConfig();
+      id3Message.delay = eventConfig.delay;
+      id3Message.repeat = eventConfig.repeat;
+      id3Message.repeatInterval = eventConfig.repeatInterval;
+      id3Message.injectTime=true;
+      id3Message.id3=true;
+
+      id3Message.data = new Object()
+      id3Message.data.stringTest = elements.stringTest.value || 'string test';
+      id3Message.data.intTest = 123;
+      id3Message.data.boolTest = true;
+      id3Message.data.doubleTest = 1.234;
+      id3Message.data.longTest = 1234567890123;
+      id3Message.data.bitIntTest = 12345678901234567890;
+      id3Message.data.array1Test = [1, 2, 3];
+      a1 = new Object();
+      a1.q1 = "one";
+      a2 = new Object();
+      a2.q2 = "two";
+      id3Message.data.array2Test = [ a1, a2 ];
+      id3Message.data.objectTest = new Object();
+      id3Message.data.objectTest.name = "gpa";
+      id3Message.data.objectTest.age = 13;
+
+
+      const apiKey = window.APP_CONFIG?.METADATA_API_KEY || '';
+
+      const streamUrl = new URL(elements.playerUrl.value);
+      const pathParts = streamUrl.pathname.split("/");
+      const appname = pathParts[1];
+      const streamname = pathParts[2];
+      // hostname, not host: host already carries the port when the stream URL has one.
+      let apiBase;
+      if (window.location.protocol === 'https:') {
+        // An HTTPS page can only call HTTPS. Use the engine's API-only SSL port, not 443: a browser
+        // never reuses a connection across ports, so the call stays off the connections carrying HLS.
+        apiBase = 'https://' + streamUrl.hostname + ':' + API_SSL_PORT;
+      } else {
+        // Use a port the player is not using (the provider listens on both 80 and 1935): WSE never
+        // answers an HTTPProvider request sent on a keep-alive connection that already carried HLS.
+        const streamPort = streamUrl.port || (streamUrl.protocol === 'https:' ? '443' : '80');
+        apiBase = 'http://' + streamUrl.hostname + ':' + (streamPort === '1935' ? 80 : 1935);
+      }
+      const apiUrl = apiBase + '/v1/server/plugin/metaDataInjection/applications/' + appname + '/streams/' + streamname;
+
+      console.log("ID3 Data inserting event:" + id3Message.event+ " with data:"+ JSON.stringify(id3Message));
+
+      // Disabled until the API answers (or the last retry gives up) so a double tap cannot send twice
+      document.getElementById('sendBtn').disabled = true;
+      setLastGuid('Sending Event....', false);
+      postId3TestData(apiUrl, apiKey, id3Message, 1);
+    }
+
+    // The same WSE issue hits the CORS preflight: WSE answers the OPTIONS itself, then never
+    // answers the POST the browser sends on that connection. Timing out drops the connection, and
+    // the retry goes out on a new one without a preflight (the browser caches it for 60s). This
+    // works because the API port carries nothing else, so no other unusable connection is idle.
+    const ID3_POST_TIMEOUT_MS = 1500;
+    const ID3_POST_MAX_ATTEMPTS = 3;
+
+    // "Last GUID" shows the GUID of the last send, or the error the API returned for it
+    function setLastGuid(text, isError) {
+      const input = document.getElementById('lastGuid');
+      input.value = text;
+      input.title = text;
+      input.classList.toggle('error', !!isError);
+    }
+
+    // The API answers errors with {"status":"failed","reason":"..."}; show the reason when there is one
+    function apiErrorText(status, body) {
+      let detail = (body || '').trim();
+      try { detail = JSON.parse(detail).reason || detail; } catch (e) { /* not JSON */ }
+      return (status + ' ' + detail).trim();
+    }
+
+    function postId3TestData(apiUrl, apiKey, id3Message, attempt)
+    {
+      $.post({
+        url: apiUrl,
+        type: 'post',
+        dataType: 'json',
+        contentType: "application/json",
+        timeout: ID3_POST_TIMEOUT_MS,
+        headers: {
+            "metadata-api-key": apiKey,
+        },
+        data: JSON.stringify(id3Message),
+        success: function (okdata) {
+          console.log("ID3 Sent:"+okdata.guid);
+          setLastGuid(okdata.guid, false);
+          document.getElementById('sendBtn').disabled = false;
+        },
+        error: function (xhr, textStatus, thrownError) {
+          if (textStatus === 'timeout' && attempt < ID3_POST_MAX_ATTEMPTS) {
+            console.log("ID3 Data send timed out, retrying (attempt " + (attempt + 1) + ")");
+            postId3TestData(apiUrl, apiKey, id3Message, attempt + 1);
+            return;
+          }
+          console.log("ID3 Data failed event:" + xhr.status + "=>" + xhr.responseText, textStatus, thrownError);
+          let message;
+          if (textStatus === 'timeout') message = `no response from ${apiUrl} after ${attempt} attempts`;
+          else if (xhr.status) message = apiErrorText(xhr.status, xhr.responseText || thrownError || xhr.statusText);
+          else message = String(thrownError || textStatus || 'request failed');
+          setLastGuid('Error: ' + message, true);
+          document.getElementById('sendBtn').disabled = false;
+        }
+      });
+    }
+    console.log("VI ID3 Metadata Player Loaded");
+  </script>
+</body>
+
+</html>

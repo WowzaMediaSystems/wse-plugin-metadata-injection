@@ -31,26 +31,34 @@ public class AMFToID3BasicStringConverter implements IAMFToID3Converter
 		this.maxVerboseConversionMessages = maxVerboseConversionMessages;
 	}
 
+	@Override
+	public String convertAMFDataListToPayload(AMFDataList amfList)
+	{
+		if (!AMFToID3Converter.hasCorrectStructure(amfList))
+			return null;
+
+		AMFDataObj payloadObj = amfList.getObject(1);
+		if (!payloadObj.containsKey(ID_WOWZA_CONVERTER))
+			return null;
+		if (!payloadObj.containsKey(ID_PAYLOAD))
+			return null;
+
+		AMFData amfData = payloadObj.get(ID_PAYLOAD);
+		if (!(amfData instanceof AMFDataItem))
+			return null;
+
+		return amfData.toString();
+	}
+
 	public void convertAMFDataListToID3(AMFDataList amfList, AMFToID3ConverterContext context, ID3Frames id3Frames)
 	{
 		while (true)
 		{
-			if (!AMFToID3Converter.hasCorrectStructure(amfList))
+			String payload = convertAMFDataListToPayload(amfList);
+			if (payload == null)
 				break;
 
 			String payloadType = amfList.getString(0);
-
-			AMFDataObj payloadObj = amfList.getObject(1);
-			if (!payloadObj.containsKey(ID_WOWZA_CONVERTER))
-				break;
-			if (!payloadObj.containsKey(ID_PAYLOAD))
-				break;
-
-			AMFData amfData = payloadObj.get(ID_PAYLOAD);
-			if (!(amfData instanceof AMFDataItem))
-				break;
-
-			String payload = amfData.toString();
 
 			// Create ID3	
 			ID3V2FrameTextInformationUserDefined id3 = new ID3V2FrameTextInformationUserDefined();

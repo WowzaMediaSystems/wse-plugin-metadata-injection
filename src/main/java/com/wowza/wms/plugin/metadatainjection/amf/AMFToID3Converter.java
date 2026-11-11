@@ -47,64 +47,84 @@ public class AMFToID3Converter
 	{
 		try
 		{
-			while (true)
-			{
-				// First object must be string identifying the type
-				// Second object must be the object payload
-				if (!hasCorrectStructure(amfList))
-					break;
-
-				AMFDataObj payloadObj = amfList.getObject(1);
-
-				// Get converter ID.  Some AMF data (ex. latency beacon) may not have it
-				String converterID = null;
-				String metaType = "unknown";
-				try
-				{
-					converterID = payloadObj.get(AMFToID3BasicStringConverter.ID_WOWZA_CONVERTER).toString();
-				}
-				catch (Exception e)
-				{
-
-				}
-				try
-				{
-					metaType = amfList.getString(0);
-
-				}
-				catch (Exception e)
-				{
-
-				}
-				IAMFToID3Converter converter = getConverterByID(amfList, converterID);
-				if (converter != null)
-				{
-					converter.convertAMFDataListToID3(amfList, context, id3Frames);
-				}
-				else
-				{
-					countFailedConversionMessages++;
-					if (countFailedConversionMessages < maxFailedConversionMessages)
-					{
-						logger.warn("MetadataInjection:Unable to convert AMF data: No Converter found:" + metaType);
-					}
-
-				}
-
-				break;
-			}
+			IAMFToID3Converter converter = selectConverter(amfList);
+			if (converter != null)
+				converter.convertAMFDataListToID3(amfList, context, id3Frames);
 		}
 		catch (Exception e)
+		{
+			logFailedConversion(amfList, e);
+		}
+	}
+
+	/**
+	 * The string {@link #convertAMFDataListToID3} writes as the ID3 TXXX value for this event, or
+	 * null when no converter handles it.
+	 */
+	public String convertAMFDataListToPayload(AMFDataList amfList)
+	{
+		try
+		{
+			IAMFToID3Converter converter = selectConverter(amfList);
+			return converter != null ? converter.convertAMFDataListToPayload(amfList) : null;
+		}
+		catch (Exception e)
+		{
+			logFailedConversion(amfList, e);
+			return null;
+		}
+	}
+
+	private IAMFToID3Converter selectConverter(AMFDataList amfList)
+	{
+		// First object must be string identifying the type
+		// Second object must be the object payload
+		if (!hasCorrectStructure(amfList))
+			return null;
+
+		AMFDataObj payloadObj = amfList.getObject(1);
+
+		// Get converter ID.  Some AMF data (ex. latency beacon) may not have it
+		String converterID = null;
+		String metaType = "unknown";
+		try
+		{
+			converterID = payloadObj.get(AMFToID3BasicStringConverter.ID_WOWZA_CONVERTER).toString();
+		}
+		catch (Exception e)
+		{
+
+		}
+		try
+		{
+			metaType = amfList.getString(0);
+
+		}
+		catch (Exception e)
+		{
+
+		}
+		IAMFToID3Converter converter = getConverterByID(amfList, converterID);
+		if (converter == null)
 		{
 			countFailedConversionMessages++;
 			if (countFailedConversionMessages < maxFailedConversionMessages)
 			{
-				logger.error("MetadataInjection:Exception converting AMF data structure", e);
-				logger.warn("MetadataInjection:Failed structure: " + AMFToDebugFormatter.amfToDebug(amfList)
-						.replace('\n', '|'));
+				logger.warn("MetadataInjection:Unable to convert AMF data: No Converter found:" + metaType);
 			}
 		}
+		return converter;
+	}
 
+	private void logFailedConversion(AMFDataList amfList, Exception e)
+	{
+		countFailedConversionMessages++;
+		if (countFailedConversionMessages < maxFailedConversionMessages)
+		{
+			logger.error("MetadataInjection:Exception converting AMF data structure", e);
+			logger.warn("MetadataInjection:Failed structure: " + AMFToDebugFormatter.amfToDebug(amfList)
+					.replace('\n', '|'));
+		}
 	}
 
 	public static boolean hasCorrectStructure(AMFDataList amfList)

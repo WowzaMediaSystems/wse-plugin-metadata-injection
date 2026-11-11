@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wowza WebRTC Metadata Publisher</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="//www.wowza.com/wp-content/uploads/wowza-logo-48x48-1-1.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #333;
+      background-color: #fff;
+      margin: 0;
+    }
+    .navbar { background-color: #222; min-height: 50px; overflow: hidden; }
+    .navbar-brand { float: left; padding: 3px 15px; font-size: 18px; line-height: 20px; height: 50px; color: #eee; text-decoration: none; }
+    .navbar-brand:hover { color: #eee; text-decoration: none; }
+    .navbar-brand-wse { font-size: 1.1rem; font-weight: 600; color: #eee; line-height: 1.2; }
+    .navbar-brand-mgr { text-transform: uppercase; color: #999; font-size: 0.65em; font-weight: bold; }
+    .navbar-logo { height: 44px; width: 44px; float: left; }
+    .navbar-text-wrapper { float: left; padding-left: 10px; }
+    .content { padding: 10px 15px; }
+    /* Controls: same look as hls.html */
+    .controls-section { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 10px 15px; margin-bottom: 10px; }
+    .url-input-group { display: flex; flex-direction: row; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .url-input-group label { font-weight: bold; }
+    .url-input-group input[type="text"] { display: block; flex: 1; min-width: 220px; padding: 6px 12px; font-size: 14px; line-height: 1.42857143; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; }
+    .url-input-group input:focus { border-color: #66afe9; outline: 0; box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6); }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-family: inherit; font-size: 14px; line-height: 1.42857143; white-space: nowrap; cursor: pointer; user-select: none; border: 1px solid transparent; border-radius: 4px; }
+    .btn-primary { color: #fff; background-color: #337ab7; border-color: #2e6da4; }
+    .btn-primary:hover, .btn-primary:focus { color: #fff; background-color: #286090; border-color: #204d74; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .url-input-group input[type="text"][readonly] { background-color: #eee; }
+    .url-input-group input[type="text"].error { color: #a94442; border-color: #ebccd1; }
+    /* Publish errors, shown over the preview */
+    .message {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      padding: 15px; text-align: center; font-size: 14px; color: #fff; background: rgba(0,0,0,0.75);
+      overflow-wrap: anywhere; overflow-y: auto;
+    }
+    .message:empty { display: none; }
+
+    /* Player and events cards: same look as hls.html */
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .card { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; min-width: 0; }
+    .card h2 { font-size: 18px; margin: 0 0 10px; color: #333; font-weight: 500; }
+    .card-icon { height: 28px; width: auto; margin-right: 8px; vertical-align: middle; }
+    .badge { background: #777; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; }
+    .badge.ok { background: #5cb85c; }
+    .badge.bad { background: #d9534f; }
+    .player { position: relative; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #000; }
+    video { display: block; width: 100%; background: #000; aspect-ratio: 16 / 9; }
+    .tab-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; margin-bottom: 10px; background: #ff8400; color: #fff; font-size: 14px; }
+    .log-display { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; font-family: Monaco, Menlo, Consolas, "Courier New", monospace; font-size: 12px; font-weight: 600; color: #222; overflow-y: auto; height: 420px; }
+    .log-entry { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,132,0,0.2); overflow-wrap: anywhere; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-timestamp { color: #ff8400; font-weight: bold; margin-bottom: 4px; font-size: 13px; }
+    .log-json { color: #555; margin: 0; font-family: inherit; font-size: 13px; white-space: pre-wrap; }
+    .placeholder-text { color: #777; text-align: center; padding: 40px 20px; white-space: pre-line; }
+
+    @media (min-width: 769px) {
+      /* Same as hls.html: the page fills the window and the log scrolls inside its card */
+      html, body { height: 100vh; overflow: hidden; }
+      body { display: flex; flex-direction: column; }
+      .navbar { flex-shrink: 0; }
+      .content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .controls-section { flex-shrink: 0; }
+      .main-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; flex: 1; min-height: 0; }
+      .card { min-height: 0; overflow: hidden; }
+      .card h2, .tab-bar { flex-shrink: 0; }
+      .player { min-height: 0; }
+      video { max-height: 100%; }
+      .log-display { flex: 1; height: auto; min-height: 0; }
+      .controls-section { border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+      .url-input-group label { font-size: 1rem; }
+      .url-input-group input[type="text"] { border-radius: 8px; padding: 12px 16px; font-size: 0.95rem; }
+      .btn { padding: 10px 20px; font-size: 0.95rem; }
+      .card { border-radius: 12px; padding: 20px; }
+      .card h2 { font-size: 1.25rem; margin-bottom: 15px; }
+      .badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
+      .log-display { border-radius: 8px; padding: 16px; font-size: 0.85rem; }
+      .log-entry { margin-bottom: 20px; padding-bottom: 20px; }
+      .log-timestamp { font-size: 0.85rem; }
+    }
+
+    /* Controls rows share one grid so labels, text boxes and buttons line up */
+    .controls-grid { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+    .controls-grid .url-input-group { display: contents; }
+    .controls-grid .url-input-group input[type="text"] { min-width: 0; width: 100%; }
+    .controls-grid .row-actions { display: flex; gap: 10px; }
+    .controls-grid .row-actions .btn { flex: 1; justify-content: center; }
+
+    /* Clear button on the right of the "Raw JSON" bar */
+    .btn-clear { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #fff; background: transparent; border: 1px solid #fff; border-radius: 4px; cursor: pointer; }
+    .btn-clear:hover, .btn-clear:focus { color: #ff8400; background: #fff; }
+
+    /* Config panel */
+    .event-config { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 14px; }
+    .event-config[hidden] { display: none; }
+    .event-config label { display: inline-flex; align-items: center; gap: 8px; font-weight: bold; }
+    .event-config input[type="text"] { width: 160px; padding: 6px 10px; font-family: inherit; font-size: 14px; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; }
+    .event-config input[type="number"] { width: 100px; padding: 6px 10px; font-family: inherit; font-size: 14px; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; }
+    .event-config input:focus { border-color: #66afe9; outline: 0; box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6); }
+    .event-config .unit { font-weight: normal; color: #777; }
+
+    select.device { padding: 6px 10px; font-family: inherit; font-size: 14px; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; max-width: 220px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">
+      <img class="navbar-logo" src="icon-wse.png" />
+      <div class="navbar-text-wrapper">
+        <div class="navbar-brand-wse">Wowza Streaming Engine</div>
+        <div class="navbar-brand-mgr">Metadata-Injection</div>
+      </div>
+    </a>
+  </nav>
+  <div class="content">
+    <div class="controls-section">
+      <div class="controls-grid">
+        <div class="url-input-group">
+          <label for="whipUrl">WHIP URL:</label>
+          <input id="whipUrl" type="text" placeholder="Enter WHIP URL (https://host/live/webrtcStream/whip)">
+          <div class="row-actions">
+            <button class="btn btn-primary" id="publish">Publish <i class="fa fa-video-camera"></i></button>
+            <button class="btn btn-primary" id="stop" disabled>Stop <i class="fa fa-stop"></i></button>
+          </div>
+        </div>
+        <div class="url-input-group">
+          <label for="stringTest">Event String:</label>
+          <input id="stringTest" type="text" placeholder="Enter a String for the event stringTest value">
+          <div class="row-actions">
+            <button class="btn btn-primary" id="send" disabled>Send Event (Channel) <i class="fa fa-arrow-right"></i></button>
+          </div>
+        </div>
+        <div class="url-input-group">
+          <label for="lastGuid">Last GUID sent:</label>
+          <input type="text" id="lastGuid" value="" readonly placeholder="GUID of the last event sent, or the error the engine returned">
+          <div class="row-actions">
+            <button type="button" class="btn btn-primary" id="eventConfigBtn" aria-expanded="false" aria-controls="eventConfig">Config <i class="fa fa-cog"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="event-config" id="eventConfig" hidden>
+        <label>Camera: <select class="device" id="cfgCamera"><option value="">Default</option></select></label>
+        <label>Microphone: <select class="device" id="cfgMicrophone"><option value="">Default</option></select></label>
+        <label title="Label of the data channel events are sent on. Must match metadataDataChannelInputLabel.">Channel Label: <input type="text" id="cfgChannelLabel" value="metadata" spellcheck="false" autocomplete="off"></label>
+      </div>
+    </div>
+    <div class="main-grid">
+      <div class="card">
+        <h2>
+          <img class="card-icon" src="webrtc.png" alt="WebRTC" title="WebRTC"><img class="card-icon" src="camera.png" alt="Publisher" title="Publisher">Publish Preview
+          <span id="mediaBadge" class="badge">media: idle</span>
+        </h2>
+        <div class="player">
+          <video id="video" autoplay playsinline muted></video>
+          <div id="message" class="message"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          <img class="card-icon" src="metadata.png" alt="Metadata" title="Metadata">Data Channel Replies
+          <span id="channelBadge" class="badge">channel (metadata): closed</span>
+        </h2>
+        <div class="tab-bar">
+          <span>Log</span>
+          <button type="button" class="btn-clear" id="clearLog" title="Clear the replies below">Clear <i class="fa fa-trash"></i></button>
+        </div>
+        <div id="log" class="log-display"><div class="placeholder-text"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_CHANNEL_LABEL = 'metadata';
+    const MAX_LOG_ENTRIES = 100;
+    // How long to wait for the engine's reply on the data channel before giving up
+    const REPLY_TIMEOUT_MS = 5000;
+    const IDLE_PLACEHOLDER = 'Waiting for publishing to start...\nPress Publish, then Send Event to inject metadata over the data channel';
+
+    const el = {
+      whipUrl: document.getElementById('whipUrl'),
+      publish: document.getElementById('publish'),
+      stop: document.getElementById('stop'),
+      send: document.getElementById('send'),
+      stringTest: document.getElementById('stringTest'),
+      video: document.getElementById('video'),
+      log: document.getElementById('log'),
+      mediaBadge: document.getElementById('mediaBadge'),
+      channelBadge: document.getElementById('channelBadge'),
+      message: document.getElementById('message'),
+      channelLabel: document.getElementById('cfgChannelLabel'),
+      camera: document.getElementById('cfgCamera'),
+      microphone: document.getElementById('cfgMicrophone')
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    // Label of the channel events are sent on: the engine's metadataDataChannelInputLabel
+    let channelLabel = params.get('label') || DEFAULT_CHANNEL_LABEL;
+
+    let peerConnection = null;
+    let mediaStream = null;
+    let dataChannel = null;
+    let whipSessionUrl = null;
+    // Set while Send Event waits for the engine's reply
+    let replyTimer = null;
+
+    // Not myStream: the demo engine already publishes a stream with that name
+    el.whipUrl.value = params.get('src') || `https://${window.location.hostname}/live/webrtcStream/whip`;
+
+    function setBadge(badge, text, state) {
+      badge.textContent = text;
+      badge.className = 'badge' + (state ? ' ' + state : '');
+    }
+
+    // Only replaces the placeholder: replies already in the log stay
+    function setPlaceholder(text) {
+      if (el.log.querySelector('.log-entry')) return;
+      el.log.innerHTML = '<div class="placeholder-text"></div>';
+      el.log.firstChild.textContent = text;
+    }
+
+    function logEntry(headingText, body) {
+      const placeholder = el.log.querySelector('.placeholder-text');
+      if (placeholder) placeholder.remove();
+
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const heading = document.createElement('div');
+      heading.className = 'log-timestamp';
+      heading.textContent = headingText;
+      const pre = document.createElement('pre');
+      pre.className = 'log-json';
+      pre.textContent = body;
+      entry.append(heading, pre);
+      el.log.prepend(entry);
+
+      while (el.log.children.length > MAX_LOG_ENTRIES) el.log.lastChild.remove();
+    }
+
+    // "Last GUID sent" shows the GUID of the last send, or the error the engine returned for it
+    function setLastGuid(text, isError) {
+      const input = document.getElementById('lastGuid');
+      input.value = text;
+      input.title = text;
+      input.classList.toggle('error', !!isError);
+    }
+
+    function updateChannelBadge() {
+      const state = dataChannel ? dataChannel.readyState : 'closed';
+      setBadge(el.channelBadge, 'channel (' + channelLabel + '): ' + state, state === 'open' ? 'ok' : '');
+      el.send.disabled = state !== 'open' || replyTimer !== null;
+    }
+
+    // ---- data channel ----
+
+    // The publisher opens the channel; the engine injects each message it receives on it and
+    // answers on the same channel with the JSON the REST API would return
+    function openDataChannel() {
+      const channel = peerConnection.createDataChannel(channelLabel);
+      dataChannel = channel;
+      updateChannelBadge();
+      channel.addEventListener('open', updateChannelBadge);
+      channel.addEventListener('close', () => {
+        if (dataChannel === channel) dataChannel = null;
+        updateChannelBadge();
+      });
+      channel.addEventListener('message', (event) => {
+        if (channel === dataChannel && typeof event.data === 'string') onReply(event.data);
+      });
+    }
+
+    function onReply(raw) {
+      finishSend();
+      let status = '(not JSON)';
+      let body = raw;
+      try {
+        const reply = JSON.parse(raw);
+        status = reply.status || '(no status)';
+        body = JSON.stringify(reply, null, 2);
+        if (reply.status === 'success') setLastGuid(reply.guid, false);
+        else setLastGuid('Error: ' + (reply.reason || raw), true);
+      } catch (e) {
+        setLastGuid('Error: ' + raw, true);
+      }
+      logEntry('reply -> ' + status, body);
+    }
+
+    function finishSend() {
+      if (replyTimer !== null) clearTimeout(replyTimer);
+      replyTimer = null;
+      updateChannelBadge();
+    }
+
+    function setChannelLabel(label) {
+      const next = label.trim() || DEFAULT_CHANNEL_LABEL;
+      el.channelLabel.value = next;
+      if (next === channelLabel) return;
+      channelLabel = next;
+
+      // Keep the label in the URL so a reload or a shared link uses it
+      const query = new URLSearchParams(window.location.search);
+      if (channelLabel === DEFAULT_CHANNEL_LABEL) query.delete('label'); else query.set('label', channelLabel);
+      const text = query.toString();
+      history.replaceState(null, '', window.location.pathname + (text ? '?' + text : ''));
+
+      // While publishing, swap the channel for one with the new label. No renegotiation is needed
+      // once the first channel has set up the data channel transport.
+      if (peerConnection) {
+        if (dataChannel) dataChannel.close();
+        openDataChannel();
+      }
+      updateChannelBadge();
+    }
+
+    // ---- devices ----
+
+    // Labels are only available once camera access has been granted
+    async function listDevices() {
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      for (const [select, kind, name] of [[el.camera, 'videoinput', 'Camera'], [el.microphone, 'audioinput', 'Microphone']]) {
+        const selected = select.value;
+        select.innerHTML = '<option value="">Default</option>';
+        devices.filter((device) => device.kind === kind && device.deviceId).forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `${name} ${index + 1}`;
+          select.append(option);
+        });
+        select.value = [...select.options].some((option) => option.value === selected) ? selected : '';
+      }
+    }
+
+    // ---- publish ----
+
+    async function publish() {
+      await stop();
+      el.message.textContent = '';
+      el.publish.disabled = true;
+
+      try {
+        if (!navigator.mediaDevices?.getUserMedia)
+          throw new Error('Camera access needs a secure page. Open this page over HTTPS (port 8443 in the demo).');
+
+        setBadge(el.mediaBadge, 'media: requesting camera', '');
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: el.camera.value ? { deviceId: { exact: el.camera.value } } : true,
+          audio: el.microphone.value ? { deviceId: { exact: el.microphone.value } } : true
+        });
+        el.video.srcObject = mediaStream;
+        el.video.play().catch(() => {});
+        listDevices();
+
+        const pc = new RTCPeerConnection();
+        peerConnection = pc;
+        mediaStream.getTracks().forEach((track) => pc.addTrack(track, mediaStream));
+        openDataChannel();
+
+        pc.addEventListener('connectionstatechange', () => {
+          const state = pc.connectionState;
+          setBadge(el.mediaBadge, 'media: ' + state, state === 'connected' ? 'ok' : (state === 'failed' ? 'bad' : ''));
+          if (state === 'connected') setPlaceholder('Publishing... press Send Event to inject metadata');
+          if (state === 'failed') el.message.textContent = 'WebRTC connection failed';
+        });
+
+        setBadge(el.mediaBadge, 'media: connecting', '');
+        await pc.setLocalDescription(await pc.createOffer());
+        await iceGatheringComplete(pc);
+
+        const whipUrl = el.whipUrl.value.trim();
+        const response = await fetch(whipUrl, {
+          method: 'POST',
+          // WHIP specifies application/sdp, but that content type makes the browser send a CORS
+          // preflight first, and WSE's preflight response has no Content-Length, which Safari waits
+          // about 2s on. text/plain needs no preflight and WSE accepts the offer either way.
+          headers: { 'Content-Type': 'text/plain' },
+          body: withoutMdnsCandidates(pc.localDescription.sdp)
+        });
+        if (!response.ok) throw new Error('WHIP request failed: ' + response.status + ' ' + (await response.text()));
+
+        const location = response.headers.get('Location');
+        if (location) whipSessionUrl = new URL(location, whipUrl).toString();
+
+        await pc.setRemoteDescription({ type: 'answer', sdp: await response.text() });
+        el.stop.disabled = false;
+      } catch (e) {
+        await stop();
+        el.message.textContent = e.name === 'NotAllowedError' ? 'Camera or microphone access was denied.' : e.message;
+        setBadge(el.mediaBadge, 'media: failed', 'bad');
+      } finally {
+        el.publish.disabled = false;
+      }
+    }
+
+    // Browsers hide local addresses behind mDNS names (xxxx.local) in the offer. WSE cannot resolve
+    // them and spends seconds trying (about 8s for Safari's six candidates) before it answers. They
+    // are not needed: the engine learns the browser's address from its connectivity checks.
+    function withoutMdnsCandidates(sdp) {
+      return sdp.split('\r\n').filter((line) => !/^a=candidate:.* \S+\.local /i.test(line)).join('\r\n');
+    }
+
+    // Send every candidate in the offer so no trickle (PATCH) requests are needed
+    function iceGatheringComplete(pc) {
+      if (pc.iceGatheringState === 'complete') return Promise.resolve();
+      return new Promise((resolve) => {
+        const timer = setTimeout(resolve, 2000);
+        pc.addEventListener('icegatheringstatechange', () => {
+          if (pc.iceGatheringState === 'complete') {
+            clearTimeout(timer);
+            resolve();
+          }
+        });
+      });
+    }
+
+    async function stop() {
+      if (whipSessionUrl) {
+        // Not awaited: the session also times out server side, and Safari can take ~10s over this
+        // request's CORS preflight, which would hold up Stop and the next Publish
+        fetch(whipSessionUrl, { method: 'DELETE' }).catch(() => {});
+        whipSessionUrl = null;
+      }
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        mediaStream = null;
+      }
+      dataChannel = null;
+      el.video.srcObject = null;
+      el.stop.disabled = true;
+      if (replyTimer !== null) setLastGuid('Error: stopped before the engine replied', true);
+      finishSend();
+      setBadge(el.mediaBadge, 'media: idle', '');
+      setPlaceholder(IDLE_PLACEHOLDER);
+    }
+
+    // ---- events ----
+
+    // Same payload the other sample pages POST to the REST API, sent on the data channel instead.
+    // No delay or repeat is set, so the engine injects the event once, straight away.
+    function sendTestEvent() {
+      if (!dataChannel || dataChannel.readyState !== 'open') {
+        setLastGuid('Error: the data channel is not open', true);
+        return;
+      }
+      const payload = {
+        event: 'test-event',
+        injectTime: true,
+        id3: true,
+        data: {
+          stringTest: el.stringTest.value || 'string test',
+          intTest: 123,
+          boolTest: true,
+          array1Test: [1, 2, 3],
+          objectTest: { name: 'gpa', age: 13 }
+        }
+      };
+
+      setLastGuid('Sending Event....', false);
+      // Disabled until the engine replies (or the wait times out) so a double tap cannot send twice
+      replyTimer = setTimeout(() => {
+        replyTimer = null;
+        setLastGuid(`Error: no reply on channel "${channelLabel}". Check metadataDataChannelInputLabel on the engine.`, true);
+        updateChannelBadge();
+      }, REPLY_TIMEOUT_MS);
+      updateChannelBadge();
+      dataChannel.send(JSON.stringify(payload));
+    }
+
+    document.getElementById('eventConfigBtn').addEventListener('click', (event) => {
+      const panel = document.getElementById('eventConfig');
+      panel.hidden = !panel.hidden;
+      event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
+    });
+
+    el.publish.addEventListener('click', publish);
+    el.stop.addEventListener('click', stop);
+    el.send.addEventListener('click', sendTestEvent);
+    el.channelLabel.addEventListener('change', (event) => setChannelLabel(event.target.value));
+    document.getElementById('clearLog').addEventListener('click', () => {
+      el.log.innerHTML = '';
+      const publishing = peerConnection && peerConnection.connectionState === 'connected';
+      setPlaceholder(publishing ? 'Publishing... press Send Event to inject metadata' : IDLE_PLACEHOLDER);
+    });
+
+    el.channelLabel.value = channelLabel;
+    updateChannelBadge();
+    setPlaceholder(IDLE_PLACEHOLDER);
+    listDevices();
+  </script>
+</body>
+</html>

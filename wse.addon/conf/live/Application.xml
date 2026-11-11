@@ -75,7 +75,7 @@
 			</Properties>
 		</TimedText>
 		<!-- HTTPStreamers (separate with commas): cupertinostreaming,   mpegdashstreaming, dvrchunkstreaming -->
-		<HTTPStreamers>cupertinostreaming, mpegdashstreaming</HTTPStreamers>
+		<HTTPStreamers>cupertinostreaming, mpegdashstreaming, webrtc</HTTPStreamers>
 		<MediaCache>
 			<MediaCacheSourceList></MediaCacheSourceList>
 		</MediaCache>
@@ -114,6 +114,8 @@
 			</Properties>
 		</RTP>
 		<WebRTC>
+			<!-- Enable WebRTC for this application (WSE 4.12+; required for WHIP/WHEP) -->
+			<Enable>true</Enable>
 			<!--  Enable WebRTC publishing to this application -->
 			<EnablePublish>true</EnablePublish>
 			<!-- Enable WebRTC playback from this application -->
@@ -124,7 +126,7 @@
 			<!--TCP format: [wowza-streaming-engine-external-ip-address],tcp,[port] -->
 			<!--UDP format: [wowza-streaming-engine-external-ip-address],udp -->
 			<IceCandidateIpAddresses>
-              wse-trial.wowza.com,tcp,1935|wse-trial.wowza.com,udp
+              wse-trial.wowza.com,tcp,1935|wse-trial.wowza.com,udp|127.0.0.1,tcp,1935|127.0.0.1,udp
 			</IceCandidateIpAddresses>
 			<!-- Local IP address of the network card you want to use for WebRTC UDP traffic -->
 			<UDPBindAddress>0.0.0.0</UDPBindAddress>
@@ -136,6 +138,17 @@
 			<DebugLog>false</DebugLog>
 			<!-- Properties for WebRTC -->
 			<Properties>
+				<!-- WebRTC data channels (WSE 4.12+). MODULE mode lets MetadataInjectionModule send to viewers -->
+				<Property>
+					<Name>webrtcEnableDataChannels</Name>
+					<Value>true</Value>
+					<Type>Boolean</Type>
+				</Property>
+				<Property>
+					<Name>webrtcDataChannelMode</Name>
+					<Value>MODULE</Value>
+					<Type>String</Type>
+				</Property>
 			</Properties>
 		</WebRTC>
 		<MediaCaster>
@@ -261,6 +274,17 @@
 			  <Name>amfToID3ConversionAddToManifest</Name>
 			  <Value>true</Value>
 			</Property>		
+			<Property>
+			  <Name>metadataDataChannelEnabled</Name>
+			  <Value>true</Value>
+			  <Type>Boolean</Type>
+			</Property>
+			<!-- Publishers can inject metadata by sending the API's JSON payload on a data channel with this label -->
+			<Property>
+			  <Name>metadataDataChannelInputLabel</Name>
+			  <Value>metadata</Value>
+			  <Type>String</Type>
+			</Property>
 		</Properties>
 		<ApplicationTimeout>0</ApplicationTimeout>
 		<PingTimeout>0</PingTimeout>

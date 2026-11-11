@@ -14,11 +14,13 @@ import com.wowza.wms.httpstreamer.mpegdashstreaming.livestreampacketizer.IHTTPSt
 import com.wowza.wms.media.mp3.model.idtags.ID3Frames;
 import com.wowza.wms.module.ModuleBase;
 import com.wowza.wms.plugin.metadatainjection.ReleaseInfo;
+import com.wowza.wms.plugin.metadatainjection.datachannel.MetadataDataChannelSupport;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.AMFToID3CmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.ID3EmsgUtils;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cmaf.PDTCmafLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.AMFToID3CupertinoLiveStreamPacketizerDataHandler;
 import com.wowza.wms.plugin.metadatainjection.datahandler.cupertino.PDTCupertinoLiveStreamPacketizerDataHandler;
+import com.wowza.wms.stream.IMediaStream;
 import com.wowza.wms.stream.livepacketizer.ILiveStreamPacketizer;
 import com.wowza.wms.stream.livepacketizer.LiveStreamPacketizerActionNotifyBase;
 
@@ -28,6 +30,8 @@ import com.wowza.wms.stream.livepacketizer.LiveStreamPacketizerActionNotifyBase;
  * <li>Cupertino (HLS/TS): ID3 tags written into the transport stream.</li>
  * <li>CMAF (HLS/DASH fMP4): ID3 tags wrapped in emsg boxes (scheme https://aomedia.org/emsg/ID3).</li>
  * </ul>
+ * With {@code metadataDataChannelEnabled} the same data events are also sent to WebRTC viewers over
+ * a data channel (WSE 4.12+).
  */
 public class MetadataInjectionModule extends ModuleBase
 {
@@ -45,6 +49,10 @@ public class MetadataInjectionModule extends ModuleBase
 	private LiveStreamPacketizerListener listener;
 
 	private IApplicationInstance appInstance;
+
+	private static final String DATA_CHANNEL_API_CLASS = "com.wowza.wms.webrtc.datachannel.IWebRTCDataChannelSession";
+	// Null when disabled or when this WSE has no WebRTC data-channel module API (older than 4.12)
+	private MetadataDataChannelSupport dataChannelSupport;
 
 	/**
 	 * Composite handler for the Cupertino (HLS/TS) packetizer.
@@ -275,6 +283,75 @@ public class MetadataInjectionModule extends ModuleBase
 
 		listener = new LiveStreamPacketizerListener(appInstance);
 		appInstance.addLiveStreamPacketizerListener(listener);
+
+		if (appInstance.getProperties().getPropertyBoolean(MetadataDataChannelSupport.PROPNAME_ENABLED, false))
+			dataChannelSupport = createDataChannelSupport(appInstance);
+	}
+
+	private MetadataDataChannelSupport createDataChannelSupport(IApplicationInstance appInstance)
+	{
+		try
+		{
+			Class.forName(DATA_CHANNEL_API_CLASS, false, CLASS.getClassLoader());
+			return new MetadataDataChannelSupport(appInstance);
+		}
+		catch (ClassNotFoundException | LinkageError e)
+		{
+			getLogger(CLASS, appInstance).warn(MODULE_NAME + ".onAppStart[" + appInstance.getContextStr() + "] "
+					+ MetadataDataChannelSupport.PROPNAME_ENABLED + " ignored: WebRTC data channels require Wowza Streaming Engine 4.12 or later");
+			return null;
+		}
+	}
+
+	public void onStreamCreate(IMediaStream stream)
+	{
+		if (dataChannelSupport != null)
+			stream.addLivePacketListener(dataChannelSupport);
+	}
+
+	public void onStreamDestroy(IMediaStream stream)
+	{
+		if (dataChannelSupport != null)
+			stream.removeLivePacketListener(dataChannelSupport);
+	}
+
+	// The WebRTC data-channel callbacks take Object, not the WSE 4.12 types: WSE finds them by name,
+	// and a 4.12 type in any public signature would stop this module loading on older versions.
+
+	public void onWebRTCDataChannelSessionCreate(Object session)
+	{
+		if (dataChannelSupport != null)
+			dataChannelSupport.onSessionCreate(session);
+	}
+
+	public void onWebRTCDataChannelSessionDestroy(Object session)
+	{
+		if (dataChannelSupport != null)
+			dataChannelSupport.onSessionDestroy(session);
+	}
+
+	public void onWebRTCDataChannelOpen(Object channel)
+	{
+		if (dataChannelSupport != null)
+			dataChannelSupport.onChannelOpen(channel);
+	}
+
+	public void onWebRTCDataChannelClose(Object channel)
+	{
+		if (dataChannelSupport != null)
+			dataChannelSupport.onChannelClose(channel);
+	}
+
+	public void onWebRTCDataChannelStringMessage(Object channel, String message)
+	{
+		if (dataChannelSupport != null)
+			dataChannelSupport.onStringMessage(channel, message);
+	}
+
+	public void onWebRTCDataChannelBinaryMessage(Object channel, byte[] message)
+	{
+		if (dataChannelSupport != null)
+			dataChannelSupport.onBinaryMessage(channel, message);
 	}
 
 	public void onAppStop(IApplicationInstance appInstance)
