@@ -117,9 +117,31 @@ After building the module, start Wowza Streaming Engine and Wowza Streaming Engi
 docker compose up
 ```
 
-2. View the stream on the provided [sample player page](http://wse-trial.wowza.com:8088/metadata-injection/hls.html?src=http://wse-trial.wowza.com/live/myStream/playlist.m3u8).  This will insert ID3 tags and show them as they are received on this HLS stream `http://wse-trial.wowza.com/live/myStream/playlist.m3u8`
+2. Open the sample pages at [https://wse-trial.wowza.com:8443/metadata-injection/](https://wse-trial.wowza.com:8443/metadata-injection/). `wse-trial.wowza.com` resolves to `127.0.0.1`, and both containers use the Wowza-provided certificate for that name, so the pages load over HTTPS without a browser warning. The landing page links to the two players:
 
-3. View the same stream over WebRTC on the [WebRTC sample player page](http://wse-trial.wowza.com:8088/metadata-injection/webrtc.html?src=https://wse-trial.wowza.com/live/myStream/whep). Press Play, then Send test event; the event shows up as it is received on the `metadata` data channel.
+   * [HLS / ID3 player](https://wse-trial.wowza.com:8443/metadata-injection/hls.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fplaylist.m3u8) plays `https://wse-trial.wowza.com/live/myStream/playlist.m3u8` and shows the ID3 tags as they are received in the stream.
+   * [WebRTC data channel player](https://wse-trial.wowza.com:8443/metadata-injection/webrtc.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fwhep) plays `https://wse-trial.wowza.com/live/myStream/whep` and shows the same events as they are received on the `metadata` data channel.
+
+3. On either player, press **Send Event**. The GUID the API returns appears in **Last GUID sent** (or the API's error message if the request fails), and the event appears in the **Raw JSON Log** when the player receives it. Over HLS that takes a few segments; over WebRTC it is close to immediate.
+
+   * **Event String** sets the `stringTest` value in the event data.
+   * **Event Config** sets the `delay`, `repeat` and `repeatInterval` sent with the event (defaults: 500 ms, 2, 500 ms).
+   * A repeated event keeps its GUID, so the second and later copies are marked `[Dup]` in the log.
+   * **Clear** empties the log.
+
+The same pages are also served over plain HTTP at [http://wse-trial.wowza.com:8088/metadata-injection/](http://wse-trial.wowza.com:8088/metadata-injection/).
+
+### Ports used by the demo
+
+| Port | Container | Use |
+| ---- | --------- | --- |
+| 8443 | Manager | HTTPS: sample pages and Wowza Streaming Engine Manager. Enabled by `JKS_TRIAL=true` in `docker-compose.yaml`; set `JKS_FILE` and `JKS_PASSWORD` instead to use your own certificate. |
+| 8088 | Manager | HTTP: sample pages and Wowza Streaming Engine Manager |
+| 443 | Engine | HTTPS streaming: HLS playback and WebRTC (WHEP) |
+| 8444 | Engine | HTTPS, metadata injection API only. Used by the sample pages when they are loaded over HTTPS. |
+| 1935, 80 | Engine | HTTP streaming and the metadata injection API. Used by the sample pages when they are loaded over HTTP. |
+
+The API has its own SSL port because a page loaded over HTTPS can only call HTTPS, and the API cannot share port 443 with playback: Wowza Streaming Engine does not answer an HTTP provider request that arrives on a keep-alive connection which has already carried HLS. A browser never reuses a connection across ports, so a port that serves only the API avoids this. See the `Metadata Injection API SSL` host port in [wse.addon/conf/VHost.xml](wse.addon/conf/VHost.xml).
 
 
 ## Install on existing WSE instance
@@ -128,7 +150,7 @@ docker compose up
 * copy wse-plugin-metadata-injection jar to lib folder
 
 ### VHost.xml 
-add HTTPProvider
+add HTTPProvider to each `<HostPort>` that should serve the API. If a browser page calls the API over HTTPS, give the API an SSL `<HostPort>` of its own rather than adding it to the one used for playback (see [Ports used by the demo](#ports-used-by-the-demo)).
 
 ```xml
 <HTTPProvider>
