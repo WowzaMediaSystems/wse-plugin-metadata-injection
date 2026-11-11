@@ -278,10 +278,52 @@ Add the following module to `<Modules>`. It converts the injected AMF data to ID
 ## API
 ### API patterns is
 * `v1/server/plugin/metaDataInjection/applications/{appName}/streams/{streamName}`
-* opitional header value `metadata-api-key` for authorization
+* authorization: HTTP Basic/Digest credentials or a `metadata-api-key` header, see [Securing the API](#securing-the-api)
 
 ### API supports methods/verbs
 `GET | POST `
+
+### Securing the API
+
+The API is an HTTP provider on the streaming ports, not part of the Wowza Streaming Engine REST API (port 8087). It can be protected in one of two ways, selected by the `useMetadataApiKey` property in the `<Properties>` of `VHost.xml`. The two are exclusive: when the API key is in use, the `<AuthenticationMethod>` is ignored.
+
+| `useMetadataApiKey` | How a request is authorized |
+| :------------------ | :-------------------------- |
+| `false` (default) | By the `<AuthenticationMethod>` of the `<HTTPProvider>` entry in `VHost.xml`: `admin-basic` (HTTP Basic) or `admin-digest` (HTTP Digest) check the user against `conf/admin.password`, the same users as Wowza Streaming Engine Manager; `none` leaves the API open. |
+| `true` | The request must carry a `metadata-api-key` header equal to the `metadataApiKey` property. A missing or wrong key is answered with `401`. |
+
+**Username and password**
+
+```shell
+curl -u admin:password -X POST -H "Content-Type: application/json" -d '{"event":"dataTest","id3":true,"data":{}}' \
+	http://127.0.0.1/v1/server/plugin/metaDataInjection/applications/live/streams/mystream
+```
+
+**API key**
+
+```xml
+<!-- VHost.xml, <VHost>/<Properties> -->
+<Property>
+	<Name>useMetadataApiKey</Name>
+	<Value>true</Value>
+</Property>
+<Property>
+	<Name>metadataApiKey</Name>
+	<Value>secretkey</Value>
+	<Type>String</Type>
+</Property>
+```
+
+```shell
+curl -X POST -H "Content-Type: application/json" -H "metadata-api-key:secretkey" -d '{"event":"dataTest","id3":true,"data":{}}' \
+	http://127.0.0.1/v1/server/plugin/metaDataInjection/applications/live/streams/mystream
+```
+
+* `metadataApiKey` can also be set in the `<Properties>` of an `Application.xml`, which overrides the `VHost.xml` value for requests to that application.
+* With `useMetadataApiKey` set to `true` and no `metadataApiKey` defined for the VHost or the application, every request is accepted. Always set a key when turning this on.
+* A browser page that calls the API needs the header it sends allowed by CORS: set `optionsCORSHeadersAddMain` in `VHost.xml` to `Access-Control-Allow-Headers:authorization` or `Access-Control-Allow-Headers:metadata-api-key`.
+* Credentials and keys are sent in clear text over HTTP. Serve the API from an SSL `<HostPort>` when it is reachable from outside the server.
+* Injection over a [WebRTC data channel](#injecting-over-a-data-channel) does not use these settings: whoever can publish the stream can inject on it, so secure WebRTC publishing instead.
 
 ### Payload (JSON)
 
