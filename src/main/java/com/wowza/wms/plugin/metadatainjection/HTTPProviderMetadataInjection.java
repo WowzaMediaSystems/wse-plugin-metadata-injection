@@ -374,6 +374,30 @@ public class HTTPProviderMetadataInjection extends HTTPProvider2Base
 		return app.getAppInstance(appInstanceName);
 	}
 
+	/**
+	 * Injects an API payload on its own thread for callers that have no HTTP request, such as the
+	 * WebRTC data channel input. The GUID can be looked up with GET .../injections/{guid} like any other.
+	 *
+	 * @return the GUID given to the injection
+	 */
+	public static String injectMetadataAsync(IApplicationInstance appInst, IMediaStream stream, JsonNode payload)
+	{
+		String guid = UUID.randomUUID().toString();
+		synchronized(injects)
+		{
+			injects.put(guid, new ArrayList<>());
+		}
+		Thread thread = new Thread(() -> {
+			WMSLogger threadLogger = WMSLoggerFactory.getLoggerObj(CLASS, appInst);
+			threadLogger.info(LOGPREFIX + guid + ": Starting metadata Inject as thread");
+			boolean ok = injectMetadata(appInst, stream, guid, payload);
+			threadLogger.info(LOGPREFIX + guid + ": Finished metadata Inject as thread. " + (ok ? "Injected" : "Not injected"));
+		}, "InjectMetadataThread");
+		thread.setDaemon(true);
+		thread.start();
+		return guid;
+	}
+
 	public static boolean injectMetadata(IApplicationInstance appInst, IMediaStream stream, String guid, JsonNode actualObj)
 	{
 		boolean retVal = false;

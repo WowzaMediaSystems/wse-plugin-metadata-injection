@@ -24,10 +24,28 @@ Added in version 3.0.0. WebRTC playback has no packetizer and no ID3 tags, so th
 
 * **What is sent:** one string message per data event, identical to the value of the ID3 `TXXX` frame for that event. For `"id3": true` injections that is the JSON `{...data, "eventType": "<event>", "guid": "<guid>"}` (plus `injectTime` when requested). Only events that are converted to ID3 are sent; `programDateTime` tags describe HLS/CMAF segments and are not sent.
 * **When:** as soon as the event reaches the stream. WebRTC latency is sub-second, so the message arrives close to the frames it was injected next to, but it is not tied to a frame.
-* **Channel:** the module opens a channel labeled `metadata` (`metadataDataChannelLabel`) toward every viewer of the stream. Publishers do not get one. If the player has already opened a channel with that label, that channel is used.
+* **Channel:** the module opens a channel labeled `metadata` (`metadataDataChannelOutputLabel`) toward every viewer of the stream. Publishers do not get one. If the player has already opened a channel with that label, that channel is used.
 * **Independent of HLS:** delivery does not depend on `amfToID3ConversionEnabled` or on any packetizer being active.
 * **Size limit:** a message must be smaller than 65,535 bytes. Larger events, and events sent while a viewer's channel is closed or its send buffer is full, are not delivered to that viewer and are not retried. A warning is logged (limited by `amfToID3ConversionFailedMaximum`).
 * **Simulcast:** viewers of a simulcast rendition receive the events of the stream the publisher sent, as with WSE's own data channel routing. Viewers of a Transcoder rendition receive the events present on that rendition's stream.
+
+### Injecting over a data channel
+
+With `metadataDataChannelInputLabel` set, the WebRTC publisher of a stream can inject metadata without calling the REST API. The publisher opens a data channel with that label and sends one string message per injection.
+
+* **Message:** the same JSON as the body of an API `POST` (see [Payload](#payload-json)), for example `{"event":"test-event","id3":true,"data":{"stringTest":"hello"}}`. `delay`, `repeat` and `repeatInterval` work as they do in the API; the injection always runs asynchronously.
+* **Result:** the event is added to the publisher's stream as AMF data, so it reaches HLS/CMAF players as ID3 and WebRTC viewers on the output channel, exactly like an API injection.
+* **Reply:** the module answers on the same channel with the API's JSON: `{"status":"success", "guid":"..."}`, or `{"status":"failed", "reason":"..."}` when the message is not valid JSON or has no `event`.
+* **Who can inject:** only the publisher of the stream. A viewer that opens the channel is answered with `failed`.
+* **Relay:** like the output label, the input label is not relayed to viewers by `metadataDataChannelRelay`.
+
+```xml
+<Property>
+	<Name>metadataDataChannelInputLabel</Name>
+	<Value>metadata</Value>
+	<Type>String</Type>
+</Property>
+```
 
 ### Configuration
 
@@ -122,10 +140,10 @@ docker compose up
    * [HLS / ID3 player](https://wse-trial.wowza.com:8443/metadata-injection/hls.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fplaylist.m3u8) plays `https://wse-trial.wowza.com/live/myStream/playlist.m3u8` and shows the ID3 tags as they are received in the stream.
    * [WebRTC data channel player](https://wse-trial.wowza.com:8443/metadata-injection/webrtc.html?src=https%3A%2F%2Fwse-trial.wowza.com%2Flive%2FmyStream%2Fwhep) plays `https://wse-trial.wowza.com/live/myStream/whep` and shows the same events as they are received on the `metadata` data channel.
 
-3. On either player, press **Send Event**. The GUID the API returns appears in **Last GUID sent** (or the API's error message if the request fails), and the event appears in the **Raw JSON Log** when the player receives it. Over HLS that takes a few segments; over WebRTC it is close to immediate.
+3. On either player, press **Send Event (API)**. The GUID the API returns appears in **Last GUID sent** (or the API's error message if the request fails), and the event appears in the **Raw JSON Log** when the player receives it. Over HLS that takes a few segments; over WebRTC it is close to immediate.
 
    * **Event String** sets the `stringTest` value in the event data.
-   * **Event Config** sets the `delay`, `repeat` and `repeatInterval` sent with the event (defaults: 500 ms, 2, 500 ms).
+   * **Config** sets the `delay`, `repeat` and `repeatInterval` sent with the event (defaults: 500 ms, 2, 500 ms).
    * A repeated event keeps its GUID, so the second and later copies are marked `[Dup]` in the log.
    * **Clear** empties the log.
 
@@ -214,7 +232,8 @@ Need to turn on Program Date Time for HLS by adding the following module:
 | amfToID3ConversionVerboseMaximum | Integer | How many verbose log messges to log. Default 5| 
 | amfToID3ConversionFailedMaximum | Integer | How many failed log messages to log. Default 5
 | metadataDataChannelEnabled | Boolean | Send data events to WebRTC viewers over a data channel. Requires WSE 4.12+ and the WebRTC properties below. Default false |
-| metadataDataChannelLabel | String | Label of the data channel opened toward each WebRTC viewer. Default `metadata` |
+| metadataDataChannelOutputLabel | String | Label of the data channel opened toward each WebRTC viewer. Default `metadata` |
+| metadataDataChannelInputLabel | String | Label of a data channel on which the stream's WebRTC publisher can inject metadata (see [Injecting over a data channel](#injecting-over-a-data-channel)). May be the same as the output label. Not set by default, which turns this off |
 | metadataDataChannelRelay | Boolean | Forward the publisher's own data channels to viewers (and viewer messages to the publisher), replacing the WSE routing that `MODULE` mode turns off. Default true |
 
 ### Properties (WebRTC):

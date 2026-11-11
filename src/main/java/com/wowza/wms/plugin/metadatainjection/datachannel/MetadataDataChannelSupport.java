@@ -5,12 +5,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wowza.wms.amf.AMFDataList;
 import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.application.WMSProperties;
 import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
+import com.wowza.wms.plugin.metadatainjection.HTTPProviderMetadataInjection;
 import com.wowza.wms.plugin.metadatainjection.amf.AMFToID3Converter;
 import com.wowza.wms.stream.IMediaStream;
 import com.wowza.wms.stream.IMediaStreamLivePacketNotify;
@@ -33,7 +36,8 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 	private static final String CLASS_NAME = CLASS.getSimpleName();
 
 	public static final String PROPNAME_ENABLED = "metadataDataChannelEnabled";
-	public static final String PROPNAME_LABEL = "metadataDataChannelLabel";
+	public static final String PROPNAME_OUTPUT_LABEL = "metadataDataChannelOutputLabel";
+	public static final String PROPNAME_INPUT_LABEL = "metadataDataChannelInputLabel";
 	public static final String PROPNAME_RELAY = "metadataDataChannelRelay";
 	public static final String DEFAULT_LABEL = "metadata";
 
@@ -62,7 +66,11 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 
 	private final WMSLogger logger;
 	private final IApplicationInstance appInstance;
-	private final String label;
+	private final String outputLabel;
+	// Null when publishers cannot inject over a data channel
+	private final String inputLabel;
+	private final ObjectMapper jsonMapper = new ObjectMapper();
+	private final AtomicInteger countRejectedInputMessages = new AtomicInteger();
 	private final boolean relay;
 	private final AMFToID3Converter converter;
 	private final int maxFailedSendMessages;
@@ -75,7 +83,9 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 		this.logger = WMSLoggerFactory.getLoggerObj(CLASS, appInstance);
 
 		WMSProperties props = appInstance.getProperties();
-		this.label = props.getPropertyStr(PROPNAME_LABEL, DEFAULT_LABEL);
+		this.outputLabel = props.getPropertyStr(PROPNAME_OUTPUT_LABEL, DEFAULT_LABEL);
+		String configuredInputLabel = props.getPropertyStr(PROPNAME_INPUT_LABEL, "").trim();
+		this.inputLabel = configuredInputLabel.isEmpty() ? null : configuredInputLabel;
 		this.relay = props.getPropertyBoolean(PROPNAME_RELAY, true);
 		this.maxFailedSendMessages = props.getPropertyInt("amfToID3ConversionFailedMaximum", 5);
 
@@ -83,7 +93,7 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 		this.converter.setMaxFailedConversionMessages(this.maxFailedSendMessages);
 		this.converter.setMaxVerboseConversionMessages(props.getPropertyInt("amfToID3ConversionVerboseMaximum", 5));
 
-		logger.info(CLASS_NAME + "[" + appInstance.getContextStr() + "] " + PROPNAME_LABEL + ":" + this.label + " " + PROPNAME_RELAY + ":" + this.relay);
+		logger.info(CLASS_NAME + "[" + appInstance.getContextStr() + "] " + PROPNAME_OUTPUT_LABEL + ":" + this.outputLabel + " " + PROPNAME_INPUT_LABEL + ":" + (this.inputLabel != null ? this.inputLabel : "[off]") + " " + PROPNAME_RELAY + ":" + this.relay);
 
 		WMSProperties webrtcProps = appInstance.getWebRTCProperties();
 		boolean channelsEnabled = webrtcProps != null && webrtcProps.getPropertyBoolean(PROPNAME_WEBRTC_ENABLE_DATA_CHANNELS, false);
@@ -120,7 +130,7 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 			for (IWebRTCDataChannelSession viewer : room.viewers)
 			{
 				// No channel yet means the viewer is still connecting
-				IWebRTCDataChannel channel = findOpenChannel(viewer, label);
+				IWebRTCDataChannel channel = findOpenChannel(viewer, outputLabel);
 				if (channel != null && !channel.sendString(payload))
 					logFailedSend(viewer, payload.length());
 			}
@@ -216,6 +226,12 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 	{
 		IWebRTCDataChannel channel = (IWebRTCDataChannel)channelObj;
 		IWebRTCDataChannelSession session = channel.getSession();
+		if (isInputChannel(channel))
+		{
+			injectFromChannel(session, channel, message);
+			return;
+		}
+
 		Room room = roomOf(session);
 		if (!isRelayed(room, null, channel))
 			return;
@@ -262,6 +278,59 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 		}
 	}
 
+	// ---- metadata input ----
+
+	private boolean isInputChannel(IWebRTCDataChannel channel)
+	{
+		return inputLabel != null && inputLabel.equals(channel.getLabel());
+	}
+
+	/**
+	 * Injects a message the stream's publisher sent on the input channel, exactly as the REST API
+	 * injects a POST body: the message is the same JSON, and the reply sent back on the channel is
+	 * the JSON the API would answer with. Only the publisher may inject; viewers are refused.
+	 */
+	private void injectFromChannel(IWebRTCDataChannelSession session, IWebRTCDataChannel channel, String message)
+	{
+		String reason = null;
+		JsonNode payload = null;
+		IMediaStream stream = null;
+
+		if (!session.isPublisher())
+			reason = "only the publisher of the stream can inject metadata";
+		else
+		{
+			try
+			{
+				payload = jsonMapper.readTree(message);
+			}
+			catch (Exception e)
+			{
+				reason = "invalid json";
+			}
+			if (reason == null && (payload == null || !payload.isObject() || !payload.hasNonNull("event")))
+				reason = "payload does not contain event";
+			if (reason == null)
+			{
+				stream = appInstance.getStreams().getStream(session.getStreamName());
+				if (stream == null)
+					reason = "stream not found: " + session.getStreamName();
+			}
+		}
+
+		if (reason != null)
+		{
+			if (countRejectedInputMessages.incrementAndGet() < maxFailedSendMessages)
+				logger.warn(CLASS_NAME + "[" + describe(session) + "] metadata not injected from channel " + channel.getLabel() + ": " + reason);
+			channel.sendString("{\"status\":\"failed\", \"reason\":" + jsonMapper.valueToTree(reason) + "}");
+			return;
+		}
+
+		// Never on the data channel thread: an injection can wait out a delay and repeats
+		String guid = HTTPProviderMetadataInjection.injectMetadataAsync(appInstance, stream, payload);
+		channel.sendString("{\"status\":\"success\", \"guid\":\"" + guid + "\"}");
+	}
+
 	// ---- rooms ----
 
 	private void join(Room room, IWebRTCDataChannelSession session)
@@ -279,7 +348,7 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 		}
 
 		room.viewers.add(session);
-		ensureChannel(session, label);
+		ensureChannel(session, outputLabel);
 		for (String publisherLabel : room.publisherLabels)
 			ensureChannel(session, publisherLabel);
 	}
@@ -313,12 +382,12 @@ public class MetadataDataChannelSupport implements IMediaStreamLivePacketNotify
 
 	/**
 	 * True when traffic on this channel is ours to route: the relay is on, the session is in a room
-	 * and the channel is not the metadata channel. With a session, also requires it to be the room's
+	 * and the channel is neither the metadata output channel nor the metadata input channel. With a session, also requires it to be the room's
 	 * current publisher (label open/close mirroring).
 	 */
 	private boolean isRelayed(Room room, IWebRTCDataChannelSession publisher, IWebRTCDataChannel channel)
 	{
-		if (!relay || room == null || label.equals(channel.getLabel()))
+		if (!relay || room == null || outputLabel.equals(channel.getLabel()) || isInputChannel(channel))
 			return false;
 		return publisher == null || publisher == room.publisher;
 	}

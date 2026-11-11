@@ -61,7 +61,7 @@
     .navbar-text-wrapper { float: left; padding-left: 10px; }
 
     /* Boxes pulled in from the top and sides; small screens keep a narrow gutter */
-    .content { max-width: 1000px; margin: 0 auto; padding: 48px 15px 15px; }
+    .content { max-width: 1200px; margin: 0 auto; padding: 48px 15px 15px; }
     @media (min-width: 769px) { .content { padding: 64px 48px 24px; } }
 
     .intro {
@@ -83,7 +83,7 @@
     }
 
     @media (min-width: 769px) {
-      .main-grid { grid-template-columns: 1fr 1fr; }
+      .main-grid { grid-template-columns: 1fr 1fr 1fr; }
     }
 
     /* Spans both columns */
@@ -164,6 +164,12 @@
         <h2>WebRTC Data Channel player</h2>
         <p>Plays the stream over WebRTC (WHEP) and logs the same events as they arrive on the <code>metadata</code> data channel. Requires Wowza Streaming Engine 4.12 or later.</p>
         <a class="btn btn-primary" id="webrtcLink" href="webrtc.html">Open WebRTC player <i class="fa fa-arrow-right"></i></a>
+      </div>
+
+      <div class="card">
+        <h2>WebRTC publisher</h2>
+        <p>Publishes your camera over WebRTC (WHIP) and injects events by sending them on a data channel instead of calling the API. Needs HTTPS for camera access.</p>
+        <a class="btn btn-primary" id="publishLink" href="publish.html">Open WebRTC publisher <i class="fa fa-arrow-right"></i></a>
       </div>
 
       <div class="card card-full">

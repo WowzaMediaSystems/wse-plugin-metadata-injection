@@ -503,7 +503,7 @@
     .btn-clear { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #fff; background: transparent; border: 1px solid #fff; border-radius: 4px; cursor: pointer; }
     .btn-clear:hover, .btn-clear:focus { color: #ff8400; background: #fff; }
 
-    /* Event Config: delay / repeat / repeatInterval sent with each test event */
+    /* Config panel: delay / repeat / repeatInterval sent with each test event */
     .event-config { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 14px; }
     .event-config[hidden] { display: none; }
     .event-config label { display: inline-flex; align-items: center; gap: 8px; font-weight: bold; }
@@ -541,14 +541,14 @@
           <label>Event String:</label>
           <input type="text" id="stringTest" value="" placeholder="Enter a String for the ID3 stringTest value">
           <div class="row-actions">
-            <button class="btn btn-primary" id="sendBtn" onclick="sendId3TestData()">Send Event <i class="fa fa-arrow-right"></i></button>
+            <button class="btn btn-primary" id="sendBtn" onclick="sendId3TestData()">Send Event (API) <i class="fa fa-arrow-right"></i></button>
           </div>
         </div>
         <div class="url-input-group">
           <label for="lastGuid">Last GUID sent:</label>
           <input type="text" id="lastGuid" value="" readonly placeholder="GUID of the last event sent, or the error the API returned">
           <div class="row-actions">
-            <button type="button" class="btn btn-primary" id="eventConfigBtn" aria-expanded="false" aria-controls="eventConfig">Event Config <i class="fa fa-cog"></i></button>
+            <button type="button" class="btn btn-primary" id="eventConfigBtn" aria-expanded="false" aria-controls="eventConfig">Config <i class="fa fa-cog"></i></button>
           </div>
         </div>
       </div>
@@ -885,7 +885,7 @@
       const end = b.end(b.length - 1);
     }, 1000);
 
-    // Event Config: values sent with each test event. Limits match the plugin's own caps.
+    // Config panel: values sent with each test event. Limits match the plugin's own caps.
     const EVENT_CONFIG_FIELDS = {
       delay: { id: 'cfgDelay', fallback: 500, min: 0, max: 30000 },
       repeat: { id: 'cfgRepeat', fallback: 2, min: 1, max: 10 },

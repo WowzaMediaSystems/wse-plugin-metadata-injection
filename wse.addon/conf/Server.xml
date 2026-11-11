@@ -82,6 +82,11 @@
 			
 			
 			
+			
+			
+			
+			
+			
 			<ServerListener>
 				<BaseClass>com.wowza.wms.module.ServerListenerStreamDemoPublisher</BaseClass>
 			</ServerListener>

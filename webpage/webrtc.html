@@ -92,10 +92,11 @@
     .btn-clear { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #fff; background: transparent; border: 1px solid #fff; border-radius: 4px; cursor: pointer; }
     .btn-clear:hover, .btn-clear:focus { color: #ff8400; background: #fff; }
 
-    /* Event Config: delay / repeat / repeatInterval sent with each test event */
+    /* Config panel: delay / repeat / repeatInterval sent with each test event */
     .event-config { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 14px; }
     .event-config[hidden] { display: none; }
     .event-config label { display: inline-flex; align-items: center; gap: 8px; font-weight: bold; }
+    .event-config input[type="text"] { width: 160px; padding: 6px 10px; font-family: inherit; font-size: 14px; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; }
     .event-config input[type="number"] { width: 100px; padding: 6px 10px; font-family: inherit; font-size: 14px; color: #555; background-color: #fff; border: 1px solid #ccc; border-radius: 4px; }
     .event-config input:focus { border-color: #66afe9; outline: 0; box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6); }
     .event-config .unit { font-weight: normal; color: #777; }
@@ -126,14 +127,14 @@
           <label for="stringTest">Event String:</label>
           <input id="stringTest" type="text" placeholder="Enter a String for the event stringTest value">
           <div class="row-actions">
-            <button class="btn btn-primary" id="send">Send Event <i class="fa fa-arrow-right"></i></button>
+            <button class="btn btn-primary" id="send">Send Event (API) <i class="fa fa-arrow-right"></i></button>
           </div>
         </div>
         <div class="url-input-group">
           <label for="lastGuid">Last GUID sent:</label>
           <input type="text" id="lastGuid" value="" readonly placeholder="GUID of the last event sent, or the error the API returned">
           <div class="row-actions">
-            <button type="button" class="btn btn-primary" id="eventConfigBtn" aria-expanded="false" aria-controls="eventConfig">Event Config <i class="fa fa-cog"></i></button>
+            <button type="button" class="btn btn-primary" id="eventConfigBtn" aria-expanded="false" aria-controls="eventConfig">Config <i class="fa fa-cog"></i></button>
           </div>
         </div>
       </div>
@@ -141,6 +142,7 @@
         <label>Delay: <input type="number" id="cfgDelay" value="500" min="0" max="30000" step="100"> <span class="unit">ms</span></label>
         <label>Repeat: <input type="number" id="cfgRepeat" value="2" min="1" max="10" step="1"> <span class="unit">times</span></label>
         <label>Repeat Interval: <input type="number" id="cfgRepeatInterval" value="500" min="0" max="5000" step="100"> <span class="unit">ms</span></label>
+        <label title="Label of the data channel whose messages are shown in the log">Channel Label: <input type="text" id="cfgChannelLabel" value="metadata" spellcheck="false" autocomplete="off"></label>
       </div>
       <div id="message" class="message"></div>
     </div>
@@ -158,7 +160,7 @@
       <div class="card">
         <h2>
           Live Data Channel Events
-          <span id="channelBadge" class="badge">metadata channel: closed</span>
+          <span id="channelBadge" class="badge">channel (metadata): closed</span>
         </h2>
         <div class="tab-bar">
           <span>Raw JSON Log</span>
@@ -171,8 +173,12 @@
 
   <script src="app_config.jsp"></script>
   <script>
-    // Must match the metadataDataChannelLabel application property
-    const METADATA_CHANNEL_LABEL = new URLSearchParams(window.location.search).get('label') || 'metadata';
+    // Must match the metadataDataChannelOutputLabel application property
+    const DEFAULT_CHANNEL_LABEL = 'metadata';
+    // Label of the channel shown in the log. Set from ?label=, or from the Config panel at any time.
+    let channelLabel = new URLSearchParams(window.location.search).get('label') || DEFAULT_CHANNEL_LABEL;
+    // Every data channel the server has opened toward this player, by label
+    const dataChannels = new Map();
     const MAX_LOG_ENTRIES = 100;
 
     const el = {
@@ -249,13 +255,37 @@
       while (el.log.children.length > MAX_LOG_ENTRIES) el.log.lastChild.remove();
     }
 
-    function wireMetadataChannel(channel) {
-      setBadge(el.channelBadge, 'metadata channel: ' + channel.readyState, channel.readyState === 'open' ? 'ok' : '');
-      channel.addEventListener('open', () => setBadge(el.channelBadge, 'metadata channel: open', 'ok'));
-      channel.addEventListener('close', () => setBadge(el.channelBadge, 'metadata channel: closed', ''));
-      channel.addEventListener('message', (event) => {
-        if (typeof event.data === 'string') logMetadata(event.data);
+    // The badge names the selected label and shows the state of its channel
+    function updateChannelBadge() {
+      const channel = dataChannels.get(channelLabel);
+      const state = channel ? channel.readyState : 'closed';
+      setBadge(el.channelBadge, 'channel (' + channelLabel + '): ' + state, state === 'open' ? 'ok' : '');
+    }
+
+    // Every channel is tracked, but only messages on the selected label reach the log. Checking the
+    // label per message lets the Config panel switch labels without reconnecting.
+    function wireDataChannel(channel) {
+      dataChannels.set(channel.label, channel);
+      updateChannelBadge();
+      channel.addEventListener('open', updateChannelBadge);
+      channel.addEventListener('close', () => {
+        if (dataChannels.get(channel.label) === channel) dataChannels.delete(channel.label);
+        updateChannelBadge();
       });
+      channel.addEventListener('message', (event) => {
+        if (channel.label === channelLabel && typeof event.data === 'string') logMetadata(event.data);
+      });
+    }
+
+    function setChannelLabel(label) {
+      channelLabel = label.trim() || DEFAULT_CHANNEL_LABEL;
+      document.getElementById('cfgChannelLabel').value = channelLabel;
+      // Keep the label in the URL so a reload or a shared link uses it
+      const params = new URLSearchParams(window.location.search);
+      if (channelLabel === DEFAULT_CHANNEL_LABEL) params.delete('label'); else params.set('label', channelLabel);
+      const query = params.toString();
+      history.replaceState(null, '', window.location.pathname + (query ? '?' + query : ''));
+      updateChannelBadge();
     }
 
     async function play() {
@@ -277,10 +307,8 @@
         // negotiated channel adds that section without showing up as a channel on either side.
         pc.createDataChannel('__sctp_bootstrap__', { negotiated: true, id: 0 });
 
-        // The server opens the metadata channel; the player only listens for it
-        pc.addEventListener('datachannel', (event) => {
-          if (event.channel.label === METADATA_CHANNEL_LABEL) wireMetadataChannel(event.channel);
-        });
+        // The server opens the channels; the player only listens for them
+        pc.addEventListener('datachannel', (event) => wireDataChannel(event.channel));
 
         pc.addEventListener('track', (event) => {
           if (!el.video.srcObject) el.video.srcObject = new MediaStream();
@@ -346,7 +374,8 @@
       el.video.srcObject = null;
       el.stop.disabled = true;
       setBadge(el.mediaBadge, 'media: idle', '');
-      setBadge(el.channelBadge, 'metadata channel: closed', '');
+      dataChannels.clear();
+      updateChannelBadge();
       setPlaceholder('Waiting for playback to start...\nPress Play to see metadata received on the data channel');
     }
 
@@ -365,7 +394,7 @@
       return (status + ' ' + detail).trim();
     }
 
-    // Event Config: values sent with each test event. Limits match the plugin's own caps.
+    // Config panel: values sent with each test event. Limits match the plugin's own caps.
     const EVENT_CONFIG_FIELDS = {
       delay: { id: 'cfgDelay', fallback: 500, min: 0, max: 30000 },
       repeat: { id: 'cfgRepeat', fallback: 2, min: 1, max: 10 },
@@ -475,6 +504,8 @@
     el.play.addEventListener('click', play);
     el.stop.addEventListener('click', stop);
     el.send.addEventListener('click', sendTestEvent);
+    document.getElementById('cfgChannelLabel').addEventListener('change', (event) => setChannelLabel(event.target.value));
+    setChannelLabel(channelLabel);
     document.getElementById('clearLog').addEventListener('click', () => {
       el.log.innerHTML = '';
       const playing = peerConnection && peerConnection.connectionState === 'connected';
