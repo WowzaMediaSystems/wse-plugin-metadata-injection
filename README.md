@@ -20,7 +20,7 @@ The CMAF `emsg` scheme follows the [ID3 Timed Metadata in CMAF](https://aomediac
 
 ## WebRTC data channels
 
-WebRTC playback has no packetizer and no ID3 tags, so the module can send each data event to WebRTC viewers over a data channel instead. Requires Wowza Streaming Engine 4.12 or later; on older versions the setting is ignored with a warning and everything else keeps working.
+Added in version 3.0.0. WebRTC playback has no packetizer and no ID3 tags, so the module can send each data event to WebRTC viewers over a data channel instead. Requires Wowza Streaming Engine 4.12 or later; on older versions the setting is ignored with a warning and everything else keeps working.
 
 * **What is sent:** one string message per data event, identical to the value of the ID3 `TXXX` frame for that event. For `"id3": true` injections that is the JSON `{...data, "eventType": "<event>", "guid": "<guid>"}` (plus `injectTime` when requested). Only events that are converted to ID3 are sent; `programDateTime` tags describe HLS/CMAF segments and are not sent.
 * **When:** as soon as the event reaches the stream. WebRTC latency is sub-second, so the message arrives close to the frames it was injected next to, but it is not tied to a frame.
@@ -194,14 +194,14 @@ Need to turn on Program Date Time for HLS by adding the following module:
 </Module>
 ```
 > [!Note]
-> ### Deprecated class names (upgrading from 1.x)
-> Version 2.0.0 moved the module and HTTP provider to the `com.wowza.wms.plugin.metadatainjection` package. The old class names still work but are deprecated and will be removed in a future major release. Update your configuration to the new names:
-> | Deprecated class | Replacement | Config file |
+> ### Removed class names (upgrading from 1.x or 2.x)
+> Version 2.0.0 moved the module and HTTP provider to the `com.wowza.wms.plugin.metadatainjection` package and deprecated the old class names. Version 3.0.0 removes them. A configuration that still uses an old name fails to load that class on 3.0.0, so update it before upgrading:
+> | Removed class | Replacement | Config file |
 > | :---------------- | :----------- | :----------- |
 > | `com.wowza.wms.plugin.metadatainjection.module.ID3AndPDTInjectionModule` | `com.wowza.wms.plugin.metadatainjection.MetadataInjectionModule` | `Application.xml` |
 > | `com.wowza.wms.plugin.metadatainjection.httpprovider.HTTPProviderMetadataInjection` | `com.wowza.wms.plugin.metadatainjection.HTTPProviderMetadataInjection` | `VHost.xml` |
-> 
-> The deprecated classes are empty subclasses of their replacements, so behaviour is identical until they are removed.
+>
+> The replacements behave the same as the removed classes did.
 
 
 ### Properties:

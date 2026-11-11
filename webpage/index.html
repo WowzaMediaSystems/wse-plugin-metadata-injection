@@ -86,6 +86,9 @@
       .main-grid { grid-template-columns: 1fr 1fr; }
     }
 
+    /* Spans both columns */
+    .card-full { grid-column: 1 / -1; }
+
     .card {
       background: #f5f5f5;
       border: 1px solid #ddd;
@@ -158,9 +161,15 @@
       </div>
 
       <div class="card">
-        <h2>WebRTC data channel player</h2>
+        <h2>WebRTC Data Channel player</h2>
         <p>Plays the stream over WebRTC (WHEP) and logs the same events as they arrive on the <code>metadata</code> data channel. Requires Wowza Streaming Engine 4.12 or later.</p>
         <a class="btn btn-primary" id="webrtcLink" href="webrtc.html">Open WebRTC player <i class="fa fa-arrow-right"></i></a>
+      </div>
+
+      <div class="card card-full">
+        <h2>Wowza Streaming Engine Manager</h2>
+        <p>Open the manager that runs alongside these pages to view the <code>live</code> application, its incoming streams and its settings.</p>
+        <a class="btn btn-primary" id="wsemLink" href="/enginemanager/" target="_blank" rel="noopener">Open WSEM <i class="fa fa-arrow-right"></i></a>
       </div>
     </div>
   </div>
