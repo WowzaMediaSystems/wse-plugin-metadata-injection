@@ -36,7 +36,12 @@
     .btn:disabled { opacity: 0.5; cursor: default; }
     .url-input-group input[type="text"][readonly] { background-color: #eee; }
     .url-input-group input[type="text"].error { color: #a94442; border-color: #ebccd1; }
-    .message { font-size: 14px; margin-top: 6px; color: #a94442; }
+    /* Playback errors, shown over the video */
+    .message {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      padding: 15px; text-align: center; font-size: 14px; color: #fff; background: rgba(0,0,0,0.75);
+      overflow-wrap: anywhere; overflow-y: auto;
+    }
     .message:empty { display: none; }
 
     /* Player and events cards: same look as hls.html */
@@ -47,7 +52,7 @@
     .badge { background: #777; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; }
     .badge.ok { background: #5cb85c; }
     .badge.bad { background: #d9534f; }
-    .player { border-radius: 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #000; }
+    .player { position: relative; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #000; }
     video { display: block; width: 100%; background: #000; aspect-ratio: 16 / 9; }
     .tab-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; margin-bottom: 10px; background: #ff8400; color: #fff; font-size: 14px; }
     .log-display { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; font-family: Monaco, Menlo, Consolas, "Courier New", monospace; font-size: 12px; font-weight: 600; color: #222; overflow-y: auto; height: 420px; }
@@ -109,7 +114,7 @@
       <img class="navbar-logo" src="icon-wse.png" />
       <div class="navbar-text-wrapper">
         <div class="navbar-brand-wse">Wowza Streaming Engine</div>
-        <div class="navbar-brand-mgr">WebRTC Data Channel Player</div>
+        <div class="navbar-brand-mgr">Metadata-Injection</div>
       </div>
     </a>
   </nav>
@@ -145,7 +150,6 @@
         <label>Repeat Interval: <input type="number" id="cfgRepeatInterval" value="500" min="0" max="5000" step="100"> <span class="unit">ms</span></label>
         <label title="Label of the data channel whose messages are shown in the log">Channel Label: <input type="text" id="cfgChannelLabel" value="metadata" spellcheck="false" autocomplete="off"></label>
       </div>
-      <div id="message" class="message"></div>
     </div>
     <div class="main-grid">
       <div class="card">
@@ -155,6 +159,7 @@
         </h2>
         <div class="player">
           <video id="video" autoplay playsinline muted controls></video>
+          <div id="message" class="message"></div>
         </div>
       </div>
 
@@ -322,6 +327,7 @@
           const state = pc.connectionState;
           setBadge(el.mediaBadge, 'media: ' + state, state === 'connected' ? 'ok' : (state === 'failed' ? 'bad' : ''));
           if (state === 'connected') setPlaceholder('Playing... awaiting metadata');
+          if (state === 'failed') el.message.textContent = 'WebRTC connection failed';
         });
 
         await pc.setLocalDescription(await pc.createOffer());
@@ -345,8 +351,9 @@
         el.stop.disabled = false;
       } catch (e) {
         el.message.textContent = e.message;
-        setBadge(el.mediaBadge, 'media: failed', 'bad');
         await stop();
+        // After stop(), which resets the badge to idle
+        setBadge(el.mediaBadge, 'media: failed', 'bad');
       } finally {
         el.play.disabled = false;
       }
